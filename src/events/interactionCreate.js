@@ -22,7 +22,7 @@ module.exports = {
         state.channelId = channelId;
         uiStateCache.set(msgId, state);
 
-        return interaction.reply({ content: `✅ Target Channel updated to <#${channelId}>. Now click **Proceed**.`, flags: 64 });
+        return interaction.deferUpdate();
       }
     }
 
@@ -35,7 +35,7 @@ module.exports = {
         state.template = template;
         uiStateCache.set(msgId, state);
 
-        return interaction.reply({ content: `✅ Template updated. Now click **Proceed**.`, flags: 64 });
+        return interaction.deferUpdate();
       }
     }
 
