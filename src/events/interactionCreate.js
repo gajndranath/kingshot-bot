@@ -799,42 +799,51 @@ async function handleButtonInteraction(interaction, client) {
         }
       }
     }
-  } else if (customId === 'edit_ai_message') {
-    // Verify user is R4 or R5
-    const clicker = await client.prisma.member.findUnique({
-      where: {
-        discord_id_guild_id: { discord_id: interaction.user.id, guild_id: interaction.guildId }
+  } else if (customId === 'edit_ai_message' || customId === 'ui_edit_ai') {
+    try {
+      const clicker = await client.prisma.member.findUnique({
+        where: {
+          discord_id_guild_id: { discord_id: interaction.user.id, guild_id: interaction.guildId }
+        }
+      });
+
+      if (!clicker || (clicker.role !== 'R4' && clicker.role !== 'R5') || !clicker.is_verified) {
+        return interaction.reply({ content: '⛔ Only verified R4/R5 can edit AI messages.', flags: 64 });
       }
-    });
 
-    if (!clicker || (clicker.role !== 'R4' && clicker.role !== 'R5') || !clicker.is_verified) {
-      return interaction.reply({ content: '⛔ Only verified R4/R5 can edit AI messages.', flags: 64 });
+      let currentContent = interaction.message.content;
+      if (interaction.message.embeds && interaction.message.embeds.length > 0) {
+        currentContent = interaction.message.embeds[0].description || currentContent;
+      }
+      if (!currentContent) currentContent = 'Error reading message content.';
+      
+      // Ensure it's a string
+      currentContent = String(currentContent);
+
+      // Truncate to 4000 characters which is the Modal TextInput maximum limit
+      const truncatedContent = currentContent.substring(0, 4000);
+
+      const modal = new ModalBuilder()
+        .setCustomId('modal_edit_ai')
+        .setTitle('Edit AI Guide/Reminder');
+
+      const textInput = new TextInputBuilder()
+        .setCustomId('ai_text_input')
+        .setLabel("Message Content")
+        .setStyle(TextInputStyle.Paragraph)
+        .setRequired(true)
+        .setValue(truncatedContent);
+
+      const row = new ActionRowBuilder().addComponents(textInput);
+      modal.addComponents(row);
+
+      await interaction.showModal(modal);
+    } catch (err) {
+      logger.error(err, 'Crash in edit_ai_message button');
+      if (!interaction.replied && !interaction.deferred) {
+        await interaction.reply({ content: '❌ A critical error occurred while opening the editor.', flags: 64 }).catch(() => {});
+      }
     }
-
-    let currentContent = interaction.message.content;
-    if (interaction.message.embeds && interaction.message.embeds.length > 0) {
-      currentContent = interaction.message.embeds[0].description || currentContent;
-    }
-    if (!currentContent) currentContent = 'Error reading message content.';
-    
-    // Truncate to 4000 characters which is the Modal TextInput maximum limit
-    const truncatedContent = currentContent.substring(0, 4000);
-
-    const modal = new ModalBuilder()
-      .setCustomId('modal_edit_ai')
-      .setTitle('Edit AI Guide/Reminder');
-
-    const textInput = new TextInputBuilder()
-      .setCustomId('ai_text_input')
-      .setLabel("Message Content")
-      .setStyle(TextInputStyle.Paragraph)
-      .setRequired(true)
-      .setValue(truncatedContent);
-
-    const row = new ActionRowBuilder().addComponents(textInput);
-    modal.addComponents(row);
-
-    await interaction.showModal(modal);
 
   } else if (customId === 'daily_checkin') {
     // Process silent check-in
