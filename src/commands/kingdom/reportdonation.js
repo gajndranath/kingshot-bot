@@ -32,7 +32,8 @@ module.exports = {
       }
 
       // Send image to Python Brain
-      const response = await fetch('http://localhost:8000/api/scan-donation', {
+      const AI_BRAIN_URL = process.env.AI_BRAIN_URL || 'http://localhost:8000/api';
+      const response = await fetch(`${AI_BRAIN_URL}/scan-donation`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ image_url: attachment.url })

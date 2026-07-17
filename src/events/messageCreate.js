@@ -1,6 +1,6 @@
 const logger = require('../utils/logger');
 
-const AI_BRAIN_URL = 'http://localhost:8000/api';
+const AI_BRAIN_URL = process.env.AI_BRAIN_URL || 'http://localhost:8000/api';
 
 async function processWithFastAPI(text) {
   try {
