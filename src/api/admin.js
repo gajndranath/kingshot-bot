@@ -59,18 +59,38 @@ router.get('/analytics', verifyToken, async (req, res) => {
 
   const servers = await req.prisma.guildConfig.findMany({
     where: filter,
-    include: { subscription: true, _count: { select: { members: true } } }
+    include: { subscription: true, _count: { select: { members: true, events: true, nap_alliances: true } } }
   });
 
   const totalMembers = servers.reduce((acc, s) => acc + s._count.members, 0);
+  const totalEvents = servers.reduce((acc, s) => acc + s._count.events, 0);
   const paidServers = servers.filter(s => s.subscription?.is_premium).length;
+  const fraudServers = servers.filter(s => s.subscription?.payment_status === 'FRAUD').length;
 
   res.json({
     total_servers: servers.length,
     total_players: totalMembers,
+    total_events: totalEvents,
     paid_servers: paidServers,
+    fraud_servers: fraudServers,
     servers: servers
   });
+});
+
+// 3.5. Single Server Deep Dive
+router.get('/server/:guild_id', verifyToken, async (req, res) => {
+  const { guild_id } = req.params;
+  const server = await req.prisma.guildConfig.findUnique({
+    where: { guild_id },
+    include: { 
+      subscription: true,
+      members: { orderBy: { activity_score: 'desc' }, take: 100 },
+      nap_alliances: true,
+      events: { orderBy: { scheduled_time: 'desc' }, take: 10 }
+    }
+  });
+  if (!server) return res.status(404).json({ error: 'Server not found' });
+  res.json(server);
 });
 
 // 4. Update Subscription (Anti-Fraud & Manual Override)
