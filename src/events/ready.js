@@ -13,5 +13,9 @@ module.exports = {
     
     // Once the bot is ready, load and register commands
     await commandHandler(client);
+
+    // Initialize Automated Background Jobs (Cron Jobs)
+    const { initCronJobs } = require('../cron/eventScheduler');
+    initCronJobs(client);
   },
 };

@@ -130,7 +130,8 @@ model Event {
   scheduled_time  DateTime
   channel_id      String?
   created_by      String
-  reminder_sent   Boolean     @default(false)
+  reminder_sent   Boolean     @default(false) // 15m reminder
+  reminder_5m_sent Boolean    @default(false) // 5m reminder
   
   rsvps           EventRSVP[]
 }
