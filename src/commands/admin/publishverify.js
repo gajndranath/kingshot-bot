@@ -24,6 +24,6 @@ module.exports = {
       );
 
     await interaction.channel.send({ embeds: [embed], components: [row] });
-    await interaction.reply({ content: '✅ Verification panel published successfully.', ephemeral: true });
+    await interaction.reply({ content: '✅ Verification panel published successfully.', flags: 64 });
   }
 };

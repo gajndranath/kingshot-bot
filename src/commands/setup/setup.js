@@ -38,7 +38,7 @@ module.exports = {
     const mode = interaction.options.getString('mode');
     const alertChannel = interaction.options.getChannel('alert_channel');
 
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: 64 });
 
     try {
       // Upsert GuildConfig in DB

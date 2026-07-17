@@ -21,7 +21,7 @@ module.exports = {
     
     // Quick validation
     if (!screenshot.contentType.startsWith('image/')) {
-      return interaction.reply({ content: 'Please upload a valid image file.', ephemeral: true });
+      return interaction.reply({ content: 'Please upload a valid image file.', flags: 64 });
     }
 
     await interaction.deferReply();

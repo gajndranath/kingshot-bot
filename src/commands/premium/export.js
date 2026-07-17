@@ -17,10 +17,10 @@ module.exports = {
     });
 
     if (member.role !== 'R5') {
-      return interaction.reply({ content: '⛔ Only the R5 can export database records.', ephemeral: true });
+      return interaction.reply({ content: '⛔ Only the R5 can export database records.', flags: 64 });
     }
 
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: 64 });
 
     try {
       const members = await client.prisma.member.findMany({

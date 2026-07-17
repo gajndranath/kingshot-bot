@@ -26,7 +26,7 @@ module.exports = {
     const discordId = interaction.user.id;
 
     if (!attachment.contentType?.startsWith('image/')) {
-      return interaction.reply({ content: '❌ Please upload a valid image file.', ephemeral: true });
+      return interaction.reply({ content: '❌ Please upload a valid image file.', flags: 64 });
     }
 
     await interaction.deferReply();

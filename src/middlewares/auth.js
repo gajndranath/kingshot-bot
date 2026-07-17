@@ -19,12 +19,12 @@ async function requireR4(interaction, prisma) {
   });
 
   if (!member || !member.is_verified) {
-    await interaction.reply({ content: '⛔ You are not verified. Please use /register first.', ephemeral: true });
+    await interaction.reply({ content: '⛔ You are not verified. Please use /register first.', flags: 64 });
     return false;
   }
 
   if (member.role !== 'R4' && member.role !== 'R5') {
-    await interaction.reply({ content: '⛔ You do not have permission to use this command. R4 or R5 required.', ephemeral: true });
+    await interaction.reply({ content: '⛔ You do not have permission to use this command. R4 or R5 required.', flags: 64 });
     return false;
   }
 

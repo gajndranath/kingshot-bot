@@ -17,7 +17,7 @@ async function checkMode(interaction, requiredMode) {
       // Not setup yet, better to allow or block? We block to force setup.
       await interaction.reply({ 
         content: `❌ This server is not configured yet. Please ask an Admin to run \`/setup\` first.`, 
-        ephemeral: true 
+        flags: 64 
       });
       return false;
     }
@@ -25,7 +25,7 @@ async function checkMode(interaction, requiredMode) {
     if (config.mode !== requiredMode) {
       await interaction.reply({ 
         content: `❌ **Command Blocked:** This command is only available in **${requiredMode}** mode. Your server is running in **${config.mode}** mode.`, 
-        ephemeral: true 
+        flags: 64 
       });
       return false;
     }

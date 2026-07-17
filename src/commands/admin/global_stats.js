@@ -9,10 +9,10 @@ module.exports = {
     const DEVELOPER_DISCORD_ID = process.env.DEVELOPER_DISCORD_ID;
 
     if (!DEVELOPER_DISCORD_ID || interaction.user.id !== DEVELOPER_DISCORD_ID) {
-      return interaction.reply({ content: '⛔ Unknown command or insufficient permissions.', ephemeral: true });
+      return interaction.reply({ content: '⛔ Unknown command or insufficient permissions.', flags: 64 });
     }
 
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: 64 });
 
     try {
       const totalGuilds = await client.prisma.guildConfig.count();

@@ -33,7 +33,7 @@ module.exports = {
       const targetUser = interaction.options.getUser('user');
       const newRole = interaction.options.getString('role');
 
-      await interaction.deferReply({ ephemeral: true });
+      await interaction.deferReply({ flags: 64 });
 
       try {
         const updatedMember = await client.prisma.member.update({

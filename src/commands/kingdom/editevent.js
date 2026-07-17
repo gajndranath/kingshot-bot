@@ -18,7 +18,7 @@ module.exports = {
     const newTimeStr = interaction.options.getString('new_time_utc');
     const newDesc = interaction.options.getString('new_description');
 
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: 64 });
 
     try {
       // Security Check

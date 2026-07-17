@@ -28,7 +28,7 @@ async function checkRateLimit(interaction) {
 
   if (record.count >= 10) {
     logger.warn(`Rate limit exceeded for user ${userId} in guild ${guildId}`);
-    await interaction.reply({ content: '⛔ Rate Limit Exceeded: You can only use AI commands 10 times per minute. Please wait.', ephemeral: true });
+    await interaction.reply({ content: '⛔ Rate Limit Exceeded: You can only use AI commands 10 times per minute. Please wait.', flags: 64 });
     return false;
   }
 

@@ -81,13 +81,13 @@ module.exports = {
       });
 
       if (!member || !member.is_verified) {
-        return interaction.reply({ content: '⛔ You must be verified to submit breach reports.', ephemeral: true });
+        return interaction.reply({ content: '⛔ You must be verified to submit breach reports.', flags: 64 });
       }
 
       const evidence = interaction.options.getAttachment('evidence');
       const description = interaction.options.getString('description');
 
-      await interaction.deferReply({ ephemeral: true });
+      await interaction.deferReply({ flags: 64 });
 
       const config = await client.prisma.guildConfig.findUnique({ where: { guild_id: interaction.guildId } });
       

@@ -27,7 +27,7 @@ async function checkSubscription(interaction) {
     if (sub.status === 'FRAUD') {
       await interaction.reply({ 
         content: '⛔ **CRITICAL SECURITY ALERT:** Your server\'s access has been permanently revoked due to billing fraud or Terms of Service violations.', 
-        ephemeral: true 
+        flags: 64 
       });
       return false;
     }
@@ -50,7 +50,7 @@ async function checkSubscription(interaction) {
     if (!sub.is_premium || sub.status !== 'ACTIVE') {
       await interaction.reply({ 
         content: `⛔ **TRIAL EXPIRED:** Your free trial has ended.\n\n*Please ask your R5 to upgrade to a Premium plan to restore AI features.*`, 
-        ephemeral: true 
+        flags: 64 
       });
       return false;
     }
@@ -64,7 +64,7 @@ async function checkSubscription(interaction) {
     if (!allowedFeatures.includes(commandName)) {
       await interaction.reply({ 
         content: `⛔ **UPGRADE REQUIRED:** Your alliance's current subscription plan (${sub.plan?.name || 'Unknown'}) does NOT include the \`/${commandName}\` feature.\n\n*Please upgrade your plan via the Web Admin Panel.*`, 
-        ephemeral: true 
+        flags: 64 
       });
       return false;
     }

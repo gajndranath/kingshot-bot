@@ -37,7 +37,7 @@ module.exports = {
     const giftCodesChannel = interaction.options.getChannel('gift_codes_channel')?.id;
     const strategyChannel = interaction.options.getChannel('strategy_channel')?.id;
 
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: 64 });
 
     try {
       const updateData = {};

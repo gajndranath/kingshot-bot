@@ -15,7 +15,7 @@ module.exports = {
     const inGameId = interaction.options.getString('in_game_id');
     const guildId = interaction.guildId;
 
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: 64 });
 
     try {
       // 1. Verify clicker is an R4/R5

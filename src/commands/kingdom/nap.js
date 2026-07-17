@@ -35,7 +35,7 @@ module.exports = {
           where: { discord_id_guild_id: { discord_id: interaction.user.id, guild_id: guildId } }
         });
         if (!member || (member.role !== 'R4' && member.role !== 'R5')) {
-          return interaction.reply({ content: '⛔ Only verified R4/R5 can manage the NAP list.', ephemeral: true });
+          return interaction.reply({ content: '⛔ Only verified R4/R5 can manage the NAP list.', flags: 64 });
         }
       }
 
@@ -67,7 +67,7 @@ module.exports = {
           where: { guild_id_tag: { guild_id: guildId, tag: tag } }
         });
 
-        if (!existing) return interaction.reply({ content: `❌ Tag **[${tag}]** is not on the NAP list.`, ephemeral: true });
+        if (!existing) return interaction.reply({ content: `❌ Tag **[${tag}]** is not on the NAP list.`, flags: 64 });
 
         await client.prisma.nAPAlliance.delete({
           where: { guild_id_tag: { guild_id: guildId, tag: tag } }
@@ -82,7 +82,7 @@ module.exports = {
         });
 
         if (naps.length === 0) {
-          return interaction.reply({ content: 'No alliances are currently protected under NAP.', ephemeral: true });
+          return interaction.reply({ content: 'No alliances are currently protected under NAP.', flags: 64 });
         }
 
         const embed = new EmbedBuilder()
@@ -98,7 +98,7 @@ module.exports = {
       }
     } catch (error) {
       logger.error(error, 'NAP Command Error');
-      await interaction.reply({ content: 'An error occurred while managing NAP.', ephemeral: true });
+      await interaction.reply({ content: 'An error occurred while managing NAP.', flags: 64 });
     }
   },
 };

@@ -22,12 +22,12 @@ module.exports = {
           .setStyle(ButtonStyle.Success)
       );
 
-      await interaction.reply({ content: 'Check-in panel spawned!', ephemeral: true });
+      await interaction.reply({ content: 'Check-in panel spawned!', flags: 64 });
       await interaction.channel.send({ embeds: [embed], components: [row] });
 
     } catch (error) {
       logger.error(error, 'Check-in setup error');
-      await interaction.reply({ content: 'Error spawning the panel.', ephemeral: true });
+      await interaction.reply({ content: 'Error spawning the panel.', flags: 64 });
     }
   },
 };

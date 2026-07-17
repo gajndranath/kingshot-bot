@@ -11,7 +11,7 @@ module.exports = {
     const guildId = interaction.guildId;
 
     try {
-      await interaction.reply({ content: '✅ Publishing the Kingshot OS Master Guide to this channel...', ephemeral: true });
+      await interaction.reply({ content: '✅ Publishing the Kingshot OS Master Guide to this channel...', flags: 64 });
 
       // Embed 1: Introduction & General Commands
       const introEmbed = new EmbedBuilder()
@@ -72,9 +72,9 @@ module.exports = {
     } catch (error) {
       logger.error(error, 'Publish Guide Error');
       if (interaction.replied || interaction.deferred) {
-        await interaction.followUp({ content: '❌ Failed to publish guide.', ephemeral: true });
+        await interaction.followUp({ content: '❌ Failed to publish guide.', flags: 64 });
       } else {
-        await interaction.reply({ content: '❌ Failed to publish guide.', ephemeral: true });
+        await interaction.reply({ content: '❌ Failed to publish guide.', flags: 64 });
       }
     }
   }

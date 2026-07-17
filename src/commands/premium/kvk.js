@@ -22,7 +22,7 @@ module.exports = {
     });
 
     if (!member || !member.is_verified) {
-      return interaction.reply({ content: '⛔ You must be a verified member to submit KvK scores.', ephemeral: true });
+      return interaction.reply({ content: '⛔ You must be a verified member to submit KvK scores.', flags: 64 });
     }
 
     // Assume we track total_kvk_submissions on Member, if 0 it's free. Else check premium.
@@ -39,13 +39,13 @@ module.exports = {
     if (!isPremium && !hasFreeUsage) {
       return interaction.reply({ 
         content: '🔒 **Your 7-Day Trial has expired and you have used your 1 Free Pass.**\n\nThe R5 must purchase a premium subscription to unlock AI features.', 
-        ephemeral: true 
+        flags: 64 
       });
     }
 
     const screenshot = interaction.options.getAttachment('screenshot');
     if (!screenshot.contentType.startsWith('image/')) {
-      return interaction.reply({ content: 'Please upload a valid image file.', ephemeral: true });
+      return interaction.reply({ content: 'Please upload a valid image file.', flags: 64 });
     }
 
     await interaction.deferReply();

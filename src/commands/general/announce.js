@@ -32,7 +32,7 @@ module.exports = {
       });
 
       if (!admin || !admin.is_verified || (admin.role !== 'R4' && admin.role !== 'R5')) {
-        return interaction.reply({ content: '⛔ Only verified R4 or R5 officials can use this command.', ephemeral: true });
+        return interaction.reply({ content: '⛔ Only verified R4 or R5 officials can use this command.', flags: 64 });
       }
 
       // Build the Announcement Embed
@@ -54,9 +54,9 @@ module.exports = {
     } catch (error) {
       logger.error(error, 'Announcement Error');
       if (interaction.replied || interaction.deferred) {
-        await interaction.followUp({ content: '❌ Failed to send announcement.', ephemeral: true });
+        await interaction.followUp({ content: '❌ Failed to send announcement.', flags: 64 });
       } else {
-        await interaction.reply({ content: '❌ Failed to send announcement.', ephemeral: true });
+        await interaction.reply({ content: '❌ Failed to send announcement.', flags: 64 });
       }
     }
   }

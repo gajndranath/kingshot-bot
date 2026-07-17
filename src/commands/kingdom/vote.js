@@ -37,7 +37,7 @@ module.exports = {
       });
 
       if (!member || (member.role !== 'R4' && member.role !== 'R5')) {
-        return interaction.reply({ content: '⛔ Only verified R4/R5 can create votes.', ephemeral: true });
+        return interaction.reply({ content: '⛔ Only verified R4/R5 can create votes.', flags: 64 });
       }
 
       const closesAt = new Date();
@@ -76,7 +76,7 @@ module.exports = {
 
     } catch (error) {
       logger.error(error, 'Create Vote Error');
-      await interaction.reply({ content: '❌ Failed to create vote.', ephemeral: true });
+      await interaction.reply({ content: '❌ Failed to create vote.', flags: 64 });
     }
   },
 };

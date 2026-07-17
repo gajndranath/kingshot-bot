@@ -32,7 +32,7 @@ module.exports = {
           }
         }
 
-        return interaction.reply({ content: '✅ The AI message has been updated!', ephemeral: true });
+        return interaction.reply({ content: '✅ The AI message has been updated!', flags: 64 });
       }
 
       if (interaction.customId === 'modal_schedule') {
@@ -43,7 +43,7 @@ module.exports = {
         try {
           const scheduledDate = new Date(`${dateStr}T${timeStr}:00Z`);
           if (isNaN(scheduledDate.getTime())) {
-            return interaction.reply({ content: '❌ Invalid date/time format. Please use YYYY-MM-DD and HH:MM.', ephemeral: true });
+            return interaction.reply({ content: '❌ Invalid date/time format. Please use YYYY-MM-DD and HH:MM.', flags: 64 });
           }
 
           const unixTimestamp = Math.floor(scheduledDate.getTime() / 1000);
@@ -70,16 +70,16 @@ module.exports = {
           );
 
           await interaction.channel.send({ content: '@everyone', embeds: [embed], components: [row] });
-          return interaction.reply({ content: '✅ Event scheduled successfully via Control Panel.', ephemeral: true });
+          return interaction.reply({ content: '✅ Event scheduled successfully via Control Panel.', flags: 64 });
         } catch (err) {
-          return interaction.reply({ content: '❌ Error scheduling event.', ephemeral: true });
+          return interaction.reply({ content: '❌ Error scheduling event.', flags: 64 });
         }
       }
 
       if (interaction.customId === 'modal_nap') {
         const config = await client.prisma.guildConfig.findUnique({ where: { guild_id: interaction.guildId } });
         if (!config || config.mode !== 'KINGDOM') {
-          return interaction.reply({ content: '❌ NAP Management is only available in Kingdom Mode.', ephemeral: true });
+          return interaction.reply({ content: '❌ NAP Management is only available in Kingdom Mode.', flags: 64 });
         }
 
         const tag = interaction.fields.getTextInputValue('main_tag').toUpperCase();
@@ -92,7 +92,7 @@ module.exports = {
           create: { guild_id: interaction.guildId, tag: tag, academy_tag: academyTag, added_by: interaction.user.id }
         });
 
-        return interaction.reply({ content: `✅ **[${tag}]** ${academyTag ? `(and Academy [${academyTag}])` : ''} added to NAP List via Control Panel.`, ephemeral: true });
+        return interaction.reply({ content: `✅ **[${tag}]** ${academyTag ? `(and Academy [${academyTag}])` : ''} added to NAP List via Control Panel.`, flags: 64 });
       }
 
       if (interaction.customId === 'modal_verify') {
@@ -100,7 +100,7 @@ module.exports = {
         let allianceTag = null;
         try { allianceTag = interaction.fields.getTextInputValue('alliance_tag'); } catch(e){}
 
-        await interaction.deferReply({ ephemeral: true });
+        await interaction.deferReply({ flags: 64 });
 
         try {
 
@@ -160,7 +160,7 @@ module.exports = {
     } catch (error) {
       logger.error(error, `Error executing command: ${interaction.commandName}`);
       
-      const errorMessage = { content: 'There was an error while executing this command!', ephemeral: true };
+      const errorMessage = { content: 'There was an error while executing this command!', flags: 64 };
       
       if (interaction.replied || interaction.deferred) {
         await interaction.followUp(errorMessage);
@@ -222,7 +222,7 @@ async function handleButtonInteraction(interaction, client) {
     });
 
     if (!clicker || (clicker.role !== 'R4' && clicker.role !== 'R5') || !clicker.is_verified) {
-      return interaction.reply({ content: '⛔ Only verified R4/R5 can approve or reject registrations.', ephemeral: true });
+      return interaction.reply({ content: '⛔ Only verified R4/R5 can approve or reject registrations.', flags: 64 });
     }
 
     // Process Approval
@@ -318,7 +318,7 @@ async function handleButtonInteraction(interaction, client) {
     });
 
     if (!clicker || (clicker.role !== 'R4' && clicker.role !== 'R5') || !clicker.is_verified) {
-      return interaction.reply({ content: '⛔ Only verified R4/R5 can edit AI messages.', ephemeral: true });
+      return interaction.reply({ content: '⛔ Only verified R4/R5 can edit AI messages.', flags: 64 });
     }
 
     const currentContent = interaction.message.content || 'Error reading message content.';
@@ -351,7 +351,7 @@ async function handleButtonInteraction(interaction, client) {
     });
 
     if (!member) {
-      return interaction.reply({ content: '❌ You must be registered to check in.', ephemeral: true });
+      return interaction.reply({ content: '❌ You must be registered to check in.', flags: 64 });
     }
 
     const now = new Date();
@@ -360,7 +360,7 @@ async function handleButtonInteraction(interaction, client) {
       const hoursSinceLast = (now - member.last_checkin) / (1000 * 60 * 60);
       if (hoursSinceLast < 24) {
         const hoursLeft = Math.ceil(24 - hoursSinceLast);
-        return interaction.reply({ content: `⏱️ You have already checked in recently. Please wait ${hoursLeft} more hours.`, ephemeral: true });
+        return interaction.reply({ content: `⏱️ You have already checked in recently. Please wait ${hoursLeft} more hours.`, flags: 64 });
       }
     }
 
@@ -373,7 +373,7 @@ async function handleButtonInteraction(interaction, client) {
       }
     });
 
-    await interaction.reply({ content: '✅ Daily Check-in complete! You earned +5 Activity Points.', ephemeral: true });
+    await interaction.reply({ content: '✅ Daily Check-in complete! You earned +5 Activity Points.', flags: 64 });
 
   } else if (customId.startsWith('trivia_')) {
     // Expected format: trivia_correct_123456789 or trivia_wrong_123456789
@@ -386,7 +386,7 @@ async function handleButtonInteraction(interaction, client) {
     });
 
     if (!member) {
-      return interaction.reply({ content: '❌ You must be registered to play Trivia.', ephemeral: true });
+      return interaction.reply({ content: '❌ You must be registered to play Trivia.', flags: 64 });
     }
 
     // Disable all buttons so no one else can click
@@ -403,10 +403,10 @@ async function handleButtonInteraction(interaction, client) {
       });
       
       await message.edit({ content: `${message.content}\n\n🏆 **Winner:** <@${interaction.user.id}> got it first! (+10 Points)`, components: [disabledRow] });
-      await interaction.reply({ content: '✅ Correct! You won the trivia.', ephemeral: true });
+      await interaction.reply({ content: '✅ Correct! You won the trivia.', flags: 64 });
     } else {
       await message.edit({ content: `${message.content}\n\n❌ **Wrong Answer by:** <@${interaction.user.id}>! Better luck tomorrow.`, components: [disabledRow] });
-      await interaction.reply({ content: '❌ Incorrect answer!', ephemeral: true });
+      await interaction.reply({ content: '❌ Incorrect answer!', flags: 64 });
     }
 
   } else if (customId.startsWith('verify_violation_')) {
@@ -414,21 +414,21 @@ async function handleButtonInteraction(interaction, client) {
       where: { discord_id_guild_id: { discord_id: interaction.user.id, guild_id: interaction.guildId } }
     });
     if (!member || (member.role !== 'R4' && member.role !== 'R5')) {
-      return interaction.reply({ content: '⛔ Only R4/R5 can verify strikes.', ephemeral: true });
+      return interaction.reply({ content: '⛔ Only R4/R5 can verify strikes.', flags: 64 });
     }
     const tag = customId.split('_')[2];
     await interaction.message.edit({ content: `✅ **Strike Verified by <@${interaction.user.id}>** against [${tag}].`, components: [] });
-    await interaction.reply({ content: 'Violation logged.', ephemeral: true });
+    await interaction.reply({ content: 'Violation logged.', flags: 64 });
 
   } else if (customId === 'ignore_violation') {
     const member = await client.prisma.member.findUnique({
       where: { discord_id_guild_id: { discord_id: interaction.user.id, guild_id: interaction.guildId } }
     });
     if (!member || (member.role !== 'R4' && member.role !== 'R5')) {
-      return interaction.reply({ content: '⛔ Only R4/R5 can ignore alerts.', ephemeral: true });
+      return interaction.reply({ content: '⛔ Only R4/R5 can ignore alerts.', flags: 64 });
     }
     await interaction.message.edit({ content: `❌ **False Alarm - Ignored by <@${interaction.user.id}>**`, components: [] });
-    await interaction.reply({ content: 'Alert dismissed.', ephemeral: true });
+    await interaction.reply({ content: 'Alert dismissed.', flags: 64 });
 
   } else if (customId.startsWith('rsvp_')) {
     // Expected format: rsvp_INFANTRY_eventId
@@ -442,7 +442,7 @@ async function handleButtonInteraction(interaction, client) {
     });
 
     if (!member) {
-      return interaction.reply({ content: '❌ You must be registered to RSVP.', ephemeral: true });
+      return interaction.reply({ content: '❌ You must be registered to RSVP.', flags: 64 });
     }
 
     // Upsert RSVP
@@ -465,13 +465,13 @@ async function handleButtonInteraction(interaction, client) {
 
     const newEmbed = EmbedBuilder.from(oldEmbed).setDescription(newDesc);
     await interaction.message.edit({ embeds: [newEmbed] });
-    await interaction.reply({ content: `✅ Successfully RSVP'd as **${troopType}**.`, ephemeral: true });
+    await interaction.reply({ content: `✅ Successfully RSVP'd as **${troopType}**.`, flags: 64 });
 
   } else if (customId.startsWith('join_rally_')) {
     // Handle silent engagement for rallies
     const message = interaction.message;
     const embed = message.embeds[0];
-    if (!embed) return interaction.reply({ content: 'Error parsing embed.', ephemeral: true });
+    if (!embed) return interaction.reply({ content: 'Error parsing embed.', flags: 64 });
 
     let description = embed.description;
     const maxPlayersMatch = embed.footer?.text?.match(/max:(\d+)/);
@@ -488,11 +488,11 @@ async function handleButtonInteraction(interaction, client) {
     const userString = `- <@${interaction.user.id}> (${userName})`;
 
     if (joinersLines.includes(userString)) {
-      return interaction.reply({ content: 'You have already joined this rally.', ephemeral: true });
+      return interaction.reply({ content: 'You have already joined this rally.', flags: 64 });
     }
 
     if (joinersLines.length >= maxPlayers) {
-      return interaction.reply({ content: 'This rally is full!', ephemeral: true });
+      return interaction.reply({ content: 'This rally is full!', flags: 64 });
     }
 
     joinersLines.push(userString);
@@ -503,7 +503,7 @@ async function handleButtonInteraction(interaction, client) {
     const newEmbed = EmbedBuilder.from(embed).setDescription(newDescription);
 
     await message.edit({ embeds: [newEmbed] });
-    await interaction.reply({ content: '✅ You have successfully joined the rally!', ephemeral: true });
+    await interaction.reply({ content: '✅ You have successfully joined the rally!', flags: 64 });
   } else if (customId.startsWith('vote_yes_') || customId.startsWith('vote_no_')) {
     const voteId = customId.split('_')[2];
     
@@ -513,23 +513,23 @@ async function handleButtonInteraction(interaction, client) {
     });
 
     if (!member || !member.is_verified) {
-      return interaction.reply({ content: '⛔ You must be verified to vote.', ephemeral: true });
+      return interaction.reply({ content: '⛔ You must be verified to vote.', flags: 64 });
     }
 
     const voteRecord = await client.prisma.vote.findUnique({ where: { id: voteId } });
     if (!voteRecord) {
-      return interaction.reply({ content: '❌ This vote has ended or was deleted.', ephemeral: true });
+      return interaction.reply({ content: '❌ This vote has ended or was deleted.', flags: 64 });
     }
 
     if (voteRecord.restricted_to === 'R4' && member.role !== 'R4' && member.role !== 'R5') {
-      return interaction.reply({ content: '⛔ This vote is restricted to R4 & R5 only.', ephemeral: true });
+      return interaction.reply({ content: '⛔ This vote is restricted to R4 & R5 only.', flags: 64 });
     }
 
     // In a full implementation, we'd store the vote in a Voter table to prevent double voting.
     // For now, we will parse the embed to dynamically update the tally for demonstration.
     const message = interaction.message;
     const embed = message.embeds[0];
-    if (!embed) return interaction.reply({ content: 'Error parsing embed.', ephemeral: true });
+    if (!embed) return interaction.reply({ content: 'Error parsing embed.', flags: 64 });
 
     let tallyStr = embed.fields.find(f => f.name === 'Current Tally').value; // "Yes: X | No: Y"
     let [yesPart, noPart] = tallyStr.split('|');
@@ -549,6 +549,6 @@ async function handleButtonInteraction(interaction, client) {
     const newEmbed = EmbedBuilder.from(embed).setFields(newFields);
 
     await message.edit({ embeds: [newEmbed] });
-    await interaction.reply({ content: '✅ Your anonymous vote has been cast.', ephemeral: true });
+    await interaction.reply({ content: '✅ Your anonymous vote has been cast.', flags: 64 });
   }
 }

@@ -21,7 +21,7 @@ module.exports = {
     const description = interaction.options.getString('description');
     const screenshot = interaction.options.getAttachment('screenshot');
 
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: 64 });
 
     try {
       await client.prisma.feedback.create({

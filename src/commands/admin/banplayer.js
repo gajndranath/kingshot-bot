@@ -20,7 +20,7 @@ module.exports = {
     const reason = interaction.options.getString('reason') || 'No reason provided';
     const guildId = interaction.guildId;
 
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: 64 });
 
     try {
       // 1. Verify clicker is an R4/R5

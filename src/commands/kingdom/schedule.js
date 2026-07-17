@@ -23,7 +23,7 @@ module.exports = {
         where: { discord_id_guild_id: { discord_id: interaction.user.id, guild_id: guildId } }
       });
       if (!member || (member.role !== 'R4' && member.role !== 'R5')) {
-        return interaction.reply({ content: '⛔ Only R4/R5 can schedule events.', ephemeral: true });
+        return interaction.reply({ content: '⛔ Only R4/R5 can schedule events.', flags: 64 });
       }
 
       // Parse UTC Time
@@ -31,11 +31,11 @@ module.exports = {
       const scheduledTime = new Date(dateTimeString);
 
       if (isNaN(scheduledTime.getTime())) {
-        return interaction.reply({ content: '❌ Invalid Date or Time format. Use YYYY-MM-DD and HH:MM.', ephemeral: true });
+        return interaction.reply({ content: '❌ Invalid Date or Time format. Use YYYY-MM-DD and HH:MM.', flags: 64 });
       }
 
       if (scheduledTime < new Date()) {
-        return interaction.reply({ content: '❌ You cannot schedule an event in the past.', ephemeral: true });
+        return interaction.reply({ content: '❌ You cannot schedule an event in the past.', flags: 64 });
       }
 
       const config = await client.prisma.guildConfig.findUnique({ where: { guild_id: guildId } });
@@ -74,14 +74,14 @@ module.exports = {
       const channel = await client.channels.fetch(channelId).catch(() => null);
       if (channel) {
         await channel.send({ content: '@everyone A new event has been scheduled!', embeds: [embed], components: [row] });
-        await interaction.reply({ content: `✅ Event scheduled successfully in <#${channelId}>.`, ephemeral: true });
+        await interaction.reply({ content: `✅ Event scheduled successfully in <#${channelId}>.`, flags: 64 });
       } else {
         await interaction.reply({ content: `✅ Event scheduled, but I could not find the events channel.`, embeds: [embed], components: [row] });
       }
 
     } catch (error) {
       logger.error(error, 'Schedule Command Error');
-      await interaction.reply({ content: 'An error occurred while scheduling.', ephemeral: true });
+      await interaction.reply({ content: 'An error occurred while scheduling.', flags: 64 });
     }
   },
 };

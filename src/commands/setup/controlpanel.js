@@ -17,7 +17,7 @@ module.exports = {
       });
 
       if (!member || (member.role !== 'R4' && member.role !== 'R5')) {
-        return interaction.reply({ content: '⛔ Only verified R4/R5 can spawn the Control Panel.', ephemeral: true });
+        return interaction.reply({ content: '⛔ Only verified R4/R5 can spawn the Control Panel.', flags: 64 });
       }
 
       // 2. Create the GUI Embed
@@ -44,11 +44,11 @@ module.exports = {
       await interaction.channel.send({ embeds: [embed], components: [row] });
       
       // Reply ephemerally to close the command
-      await interaction.reply({ content: '✅ Control Panel spawned successfully.', ephemeral: true });
+      await interaction.reply({ content: '✅ Control Panel spawned successfully.', flags: 64 });
 
     } catch (error) {
       logger.error(error, 'Control Panel Spawner Error');
-      await interaction.reply({ content: '❌ Failed to spawn Control Panel.', ephemeral: true });
+      await interaction.reply({ content: '❌ Failed to spawn Control Panel.', flags: 64 });
     }
   },
 };

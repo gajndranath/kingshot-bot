@@ -15,7 +15,7 @@ module.exports = {
     if (!(await checkSubscription(interaction))) return;
 
     // Acknowledge the interaction immediately as ephemeral
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: 64 });
 
     try {
       const targetMessage = interaction.targetMessage;

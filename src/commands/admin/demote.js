@@ -15,7 +15,7 @@ module.exports = {
     const targetUser = interaction.options.getUser('user');
     const guildId = interaction.guildId;
 
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: 64 });
 
     try {
       // 1. Verify clicker is an R5 (or server owner)

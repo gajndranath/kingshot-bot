@@ -21,6 +21,7 @@
     "jsonwebtoken": "^9.0.3",
     "node-cron": "^3.0.3",
     "node-fetch": "^3.3.2",
+    "openai": "^6.48.0",
     "stripe": "^14.19.0",
     "tesseract.js": "^7.0.0",
     "uuid": "^11.1.1"

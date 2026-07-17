@@ -16,7 +16,7 @@ module.exports = {
       });
 
       if (!member) {
-        return interaction.reply({ content: '❌ You must be registered first.', ephemeral: true });
+        return interaction.reply({ content: '❌ You must be registered first.', flags: 64 });
       }
 
       const newStatus = !member.is_weekend_warrior;
@@ -29,18 +29,18 @@ module.exports = {
       if (newStatus) {
         await interaction.reply({ 
           content: '✅ You are now marked as a **Weekend Warrior**! You are protected from the 14-day inactivity auto-kick. We will see you on the weekends!',
-          ephemeral: true 
+          flags: 64 
         });
       } else {
         await interaction.reply({ 
           content: '❌ You are no longer a Weekend Warrior. Regular activity rules apply.',
-          ephemeral: true 
+          flags: 64 
         });
       }
 
     } catch (error) {
       logger.error(error, 'Weekend Warrior toggle error');
-      await interaction.reply({ content: 'An error occurred. Try again later.', ephemeral: true });
+      await interaction.reply({ content: 'An error occurred. Try again later.', flags: 64 });
     }
   },
 };

@@ -14,7 +14,7 @@ async function requirePremium(interaction, prisma) {
   });
 
   if (!sub) {
-    await interaction.reply({ content: '🔒 Your server has not been initialized. An admin must run `/setup` first.', ephemeral: true });
+    await interaction.reply({ content: '🔒 Your server has not been initialized. An admin must run `/setup` first.', flags: 64 });
     return false;
   }
 
@@ -27,7 +27,7 @@ async function requirePremium(interaction, prisma) {
   if (now > sub.trial_expires) {
     await interaction.reply({ 
       content: '🔒 **Your 7-Day Trial has expired.**\n\nThe R5 must purchase a premium subscription to unlock AI features.\nVisit: https://kingshot-bot.example.com/pricing', 
-      ephemeral: true 
+      flags: 64 
     });
     return false;
   }

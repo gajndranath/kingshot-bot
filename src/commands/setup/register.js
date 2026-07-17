@@ -28,7 +28,7 @@ module.exports = {
     const role = interaction.options.getString('role');
     const allianceTag = interaction.options.getString('alliance_tag');
 
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: 64 });
 
     try {
 

@@ -24,7 +24,7 @@ module.exports = {
     const newRole = interaction.options.getString('role');
     const guildId = interaction.guildId;
 
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: 64 });
 
     try {
       // 1. Verify clicker is an R4/R5 (or server owner)
