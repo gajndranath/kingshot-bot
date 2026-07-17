@@ -583,6 +583,76 @@ async function handleButtonInteraction(interaction, client) {
     return interaction.reply({ embeds: [embed], components: [channelMenu, buttonRow], flags: 64 });
   }
 
+  if (customId === 'ui_open_announce') {
+    const embed = new EmbedBuilder()
+      .setTitle('📢 Announcement Dashboard')
+      .setDescription('Welcome to the Announcement Dashboard.\n\n1️⃣ Select a **Target Channel** (Optional - Uses Default).\n2️⃣ Select a **Template** (Optional).\n3️⃣ Click **Proceed** to edit and send the message.')
+      .setColor('#2ecc71');
+
+    const channelMenu = new ActionRowBuilder().addComponents(
+      new ChannelSelectMenuBuilder()
+        .setCustomId('ui_announce_channel')
+        .setPlaceholder('1️⃣ Target Channel (Optional - Uses Default)')
+        .setChannelTypes(ChannelType.GuildText)
+    );
+
+    const templateMenu = new ActionRowBuilder().addComponents(
+      new StringSelectMenuBuilder()
+        .setCustomId('ui_announce_template')
+        .setPlaceholder('2️⃣ Select a Template (Optional)')
+        .addOptions(
+          new StringSelectMenuOptionBuilder().setLabel('📢 General Announcement').setValue('general').setDescription('Standard announcement template'),
+          new StringSelectMenuOptionBuilder().setLabel('💪 Power Up Reminder').setValue('power_up').setDescription('Remind players to push power'),
+          new StringSelectMenuOptionBuilder().setLabel('🛡️ Shield Reminder').setValue('shield').setDescription('Urgent reminder to bubble up'),
+          new StringSelectMenuOptionBuilder().setLabel('⚔️ War Declaration').setValue('war').setDescription('Official war declaration template')
+        )
+    );
+
+    const buttonRow = new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId('open_announce_modal')
+        .setLabel('3️⃣ Proceed to Editor')
+        .setStyle(ButtonStyle.Success)
+    );
+
+    return interaction.reply({ embeds: [embed], components: [channelMenu, templateMenu, buttonRow], flags: 64 });
+  }
+
+  if (customId === 'ui_open_guide') {
+    const embed = new EmbedBuilder()
+      .setTitle('📚 Guide Poster Dashboard')
+      .setDescription('Welcome to the Guide Poster.\n\n1️⃣ Select a **Target Channel** (Optional - Uses Default).\n2️⃣ Select a **Strategy Guide**.\n3️⃣ Click **Proceed** to post the guide.')
+      .setColor('#3498db');
+
+    const channelMenu = new ActionRowBuilder().addComponents(
+      new ChannelSelectMenuBuilder()
+        .setCustomId('ui_guide_channel')
+        .setPlaceholder('1️⃣ Target Channel (Optional - Uses Default)')
+        .setChannelTypes(ChannelType.GuildText)
+    );
+
+    const templateMenu = new ActionRowBuilder().addComponents(
+      new StringSelectMenuBuilder()
+        .setCustomId('ui_guide_template')
+        .setPlaceholder('2️⃣ Select a Strategy Guide')
+        .addOptions(
+          new StringSelectMenuOptionBuilder().setLabel('🐻 Bear Hunt').setValue('guide_bear_hunt').setDescription('Strategy for Bear Trap'),
+          new StringSelectMenuOptionBuilder().setLabel('🏰 Castle Siege').setValue('guide_castle_siege').setDescription('Strategy for Sunfire Castle'),
+          new StringSelectMenuOptionBuilder().setLabel('⚔️ KvK (SVS)').setValue('guide_kvk').setDescription('State vs State Warfare Rules'),
+          new StringSelectMenuOptionBuilder().setLabel('🛡️ Facility/Fortress').setValue('guide_facility').setDescription('Facility capture strategy')
+        )
+    );
+
+    const buttonRow = new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId('post_guide_btn')
+        .setLabel('3️⃣ Proceed to Post Guide')
+        .setStyle(ButtonStyle.Success)
+    );
+
+    return interaction.reply({ embeds: [embed], components: [channelMenu, templateMenu, buttonRow], flags: 64 });
+  }
+
   if (customId === 'ui_verify_me') {
     const modal = new ModalBuilder()
       .setCustomId('modal_verify')
