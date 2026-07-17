@@ -91,7 +91,8 @@ module.exports = {
         }
 
         const editRow = new ActionRowBuilder().addComponents(
-          new ButtonBuilder().setCustomId('edit_ai_message').setLabel('✏️ Edit Message').setStyle(ButtonStyle.Secondary)
+          new ButtonBuilder().setCustomId('edit_ai_message').setLabel('✏️ Edit Message').setStyle(ButtonStyle.Secondary),
+          new ButtonBuilder().setCustomId('ui_translate_guide').setLabel('🌐 Translate').setStyle(ButtonStyle.Primary)
         );
 
         await targetChannel.send({ embeds: [embed], components: [editRow] });
@@ -256,7 +257,11 @@ module.exports = {
           return interaction.reply({ content: `❌ I do not have permission to send messages and embed links in <#${targetChannel.id}>.`, flags: 64 });
         }
 
-        await targetChannel.send({ content: '@everyone', embeds: [embed] });
+        const row = new ActionRowBuilder().addComponents(
+          new ButtonBuilder().setCustomId('ui_translate_guide').setLabel('🌐 Translate').setStyle(ButtonStyle.Primary)
+        );
+
+        await targetChannel.send({ content: '@everyone', embeds: [embed], components: [row] });
         
         if (targetChannel.id !== interaction.channelId) {
            return interaction.update({ content: `✅ Announcement successfully posted in <#${targetChannel.id}>.`, embeds: [], components: [] });
@@ -345,7 +350,8 @@ module.exports = {
           const row = new ActionRowBuilder().addComponents(
             new ButtonBuilder().setCustomId(`rsvp_INFANTRY_${event.id}`).setLabel('🛡️ Infantry').setStyle(ButtonStyle.Primary),
             new ButtonBuilder().setCustomId(`rsvp_LANCER_${event.id}`).setLabel('🐎 Lancer').setStyle(ButtonStyle.Danger),
-            new ButtonBuilder().setCustomId(`rsvp_MARKSMAN_${event.id}`).setLabel('🏹 Marksman').setStyle(ButtonStyle.Success)
+            new ButtonBuilder().setCustomId(`rsvp_MARKSMAN_${event.id}`).setLabel('🏹 Marksman').setStyle(ButtonStyle.Success),
+            new ButtonBuilder().setCustomId('ui_translate_guide').setLabel('🌐 Translate').setStyle(ButtonStyle.Secondary)
           );
 
           await targetChannel.send({ content: '@everyone', embeds: [embed], components: [row] });
@@ -1053,5 +1059,47 @@ async function handleButtonInteraction(interaction, client) {
 
     await message.edit({ embeds: [newEmbed] });
     await interaction.reply({ content: '✅ Your anonymous vote has been cast.', flags: 64 });
+  } else if (customId === 'ui_translate_guide') {
+    // Acknowledge the interaction immediately
+    await interaction.deferReply({ flags: 64 });
+
+    try {
+      const targetMessage = interaction.message;
+      let textToTranslate = targetMessage.content;
+      
+      if (!textToTranslate && targetMessage.embeds && targetMessage.embeds.length > 0) {
+        textToTranslate = targetMessage.embeds[0].description || '';
+      }
+
+      if (!textToTranslate || textToTranslate.trim() === '') {
+        return interaction.editReply({ content: '❌ There is no text in this message to translate.' });
+      }
+
+      // Check if text is too long
+      if (textToTranslate.length > 2000) {
+        textToTranslate = textToTranslate.substring(0, 2000) + '...';
+      }
+
+      // Detect user's Discord app language (e.g., 'en-US' -> 'en')
+      let targetLang = interaction.locale.split('-')[0];
+      if (!targetLang) targetLang = 'en'; // fallback
+
+      // We will require google-translate-api-x dynamically or assume it's at the top
+      // Wait, let's require it locally just in case it's not required at the top
+      const translate = require('google-translate-api-x');
+      const res = await translate(textToTranslate, { to: targetLang });
+
+      const embed = new EmbedBuilder()
+        .setColor('#1ABC9C')
+        .setTitle('🌍 Translation')
+        .setDescription(res.text)
+        .setFooter({ text: `Translated to ${targetLang.toUpperCase()} via Translate Button` });
+
+      return interaction.editReply({ embeds: [embed] });
+    } catch (error) {
+      const logger = require('../utils/logger');
+      logger.error(error, 'Button Translation Error');
+      return interaction.editReply({ content: '❌ Translation failed. Please try again later.' });
+    }
   }
 }
