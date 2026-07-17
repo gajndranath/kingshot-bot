@@ -16,11 +16,18 @@ module.exports = {
         )
         .setRequired(false)
     )
+    .addChannelOption(option => 
+      option.setName('target_channel')
+        .setDescription('Optional: Select a specific channel to post this announcement')
+        .addChannelTypes(0) // 0 is ChannelType.GuildText
+        .setRequired(false)
+    )
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages),
 
   async execute(interaction, client) {
     try {
       const selectedTemplate = interaction.options.getString('template');
+      const targetChannel = interaction.options.getChannel('target_channel');
 
       const admin = await client.prisma.member.findUnique({
         where: { discord_id_guild_id: { discord_id: interaction.user.id, guild_id: interaction.guildId } }
@@ -48,8 +55,10 @@ module.exports = {
         defaultMessage = 'Our scheduled event is starting soon! Please get online, use your buffs, and join the rallies. Follow instructions in the event channel.';
       }
 
+      const modalId = targetChannel ? `modal_announce_${targetChannel.id}` : 'modal_announce_DEFAULT';
+
       const modal = new ModalBuilder()
-        .setCustomId('modal_announce')
+        .setCustomId(modalId)
         .setTitle('📢 Create Announcement');
 
       const titleInput = new TextInputBuilder()

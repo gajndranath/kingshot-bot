@@ -35,7 +35,9 @@ module.exports = {
         return interaction.reply({ content: '✅ The AI message has been updated!', flags: 64 });
       }
 
-      if (interaction.customId === 'modal_announce') {
+      if (interaction.customId.startsWith('modal_announce_')) {
+        const targetId = interaction.customId.replace('modal_announce_', '');
+        
         const title = interaction.fields.getTextInputValue('announce_title');
         const message = interaction.fields.getTextInputValue('announce_message');
         let image = null;
@@ -57,8 +59,33 @@ module.exports = {
           embed.setImage(image);
         }
 
-        await interaction.reply({ content: '@everyone', embeds: [embed] });
-        return;
+        // Determine which channel to send to
+        let finalChannelId = interaction.channelId; // Fallback to current
+        
+        if (targetId === 'DEFAULT') {
+          const config = await client.prisma.guildConfig.findUnique({ where: { guild_id: interaction.guildId } });
+          if (config && config.alert_channel) finalChannelId = config.alert_channel;
+        } else {
+          finalChannelId = targetId;
+        }
+
+        const targetChannel = await interaction.guild.channels.fetch(finalChannelId).catch(() => null);
+        if (!targetChannel) {
+          return interaction.reply({ content: '❌ Could not find the target channel.', flags: 64 });
+        }
+
+        const botPermissions = targetChannel.permissionsFor(client.user);
+        if (!botPermissions || !botPermissions.has(PermissionFlagsBits.SendMessages) || !botPermissions.has(PermissionFlagsBits.EmbedLinks)) {
+          return interaction.reply({ content: `❌ I do not have permission to send messages and embed links in <#${targetChannel.id}>.`, flags: 64 });
+        }
+
+        await targetChannel.send({ content: '@everyone', embeds: [embed] });
+        
+        if (targetChannel.id !== interaction.channelId) {
+           return interaction.reply({ content: `✅ Announcement successfully posted in <#${targetChannel.id}>.`, flags: 64 });
+        } else {
+           return interaction.reply({ content: '✅ Announcement posted.', flags: 64 });
+        }
       }
 
       if (interaction.customId === 'modal_botissue') {
@@ -83,7 +110,8 @@ module.exports = {
         }
       }
 
-      if (interaction.customId === 'modal_schedule') {
+      if (interaction.customId.startsWith('modal_schedule_')) {
+        const targetId = interaction.customId.replace('modal_schedule_', '');
         const name = interaction.fields.getTextInputValue('event_name');
         const dateStr = interaction.fields.getTextInputValue('event_date');
         const timeStr = interaction.fields.getTextInputValue('event_time');
@@ -94,6 +122,25 @@ module.exports = {
             return interaction.reply({ content: '❌ Invalid date/time format. Please use YYYY-MM-DD and HH:MM.', flags: 64 });
           }
 
+          // Determine which channel to send to
+          let finalChannelId = interaction.channelId; // Fallback to current
+          if (targetId === 'DEFAULT') {
+            const config = await client.prisma.guildConfig.findUnique({ where: { guild_id: interaction.guildId } });
+            if (config && config.alert_channel) finalChannelId = config.alert_channel;
+          } else {
+            finalChannelId = targetId;
+          }
+
+          const targetChannel = await interaction.guild.channels.fetch(finalChannelId).catch(() => null);
+          if (!targetChannel) {
+            return interaction.reply({ content: '❌ Could not find the target channel.', flags: 64 });
+          }
+
+          const botPermissions = targetChannel.permissionsFor(client.user);
+          if (!botPermissions || !botPermissions.has(PermissionFlagsBits.SendMessages) || !botPermissions.has(PermissionFlagsBits.EmbedLinks)) {
+            return interaction.reply({ content: `❌ I do not have permission to send messages and embed links in <#${targetChannel.id}>.`, flags: 64 });
+          }
+
           const unixTimestamp = Math.floor(scheduledDate.getTime() / 1000);
           
           const event = await client.prisma.event.create({
@@ -101,12 +148,13 @@ module.exports = {
               guild_id: interaction.guildId,
               name: name,
               scheduled_time: scheduledDate,
+              channel_id: finalChannelId, // Store the target channel in DB
               created_by: interaction.user.id
             }
           });
 
           const embed = new EmbedBuilder()
-            .setColor('#f1c40f')
+            .setColor('#ff0000')
             .setTitle(`📅 Upcoming Event: ${name}`)
             .setDescription(`**Time:** <t:${unixTimestamp}:F>\n**Countdown:** <t:${unixTimestamp}:R>\n\n**RSVP Roster:**\n🛡️ Infantry: 0\n🐎 Lancers: 0\n🏹 Marksmen: 0`)
             .setFooter({ text: 'Scheduled by ' + interaction.user.tag });
@@ -117,8 +165,13 @@ module.exports = {
             new ButtonBuilder().setCustomId(`rsvp_MARKSMAN_${event.id}`).setLabel('🏹 Marksman').setStyle(ButtonStyle.Success)
           );
 
-          await interaction.channel.send({ content: '@everyone', embeds: [embed], components: [row] });
-          return interaction.reply({ content: '✅ Event scheduled successfully via Control Panel.', flags: 64 });
+          await targetChannel.send({ content: '@everyone', embeds: [embed], components: [row] });
+          
+          if (targetChannel.id !== interaction.channelId) {
+             return interaction.reply({ content: `✅ Event scheduled successfully. Details posted in <#${targetChannel.id}>.`, flags: 64 });
+          } else {
+             return interaction.reply({ content: '✅ Event scheduled successfully.', flags: 64 });
+          }
         } catch (err) {
           logger.error(err, 'Event schedule error');
           return interaction.reply({ content: '❌ Error scheduling event: ' + err.message, flags: 64 });
@@ -326,13 +379,13 @@ async function handleButtonInteraction(interaction, client) {
   
   if (customId === 'ui_schedule_event') {
     const modal = new ModalBuilder()
-      .setCustomId('modal_schedule')
+      .setCustomId('modal_schedule_DEFAULT')
       .setTitle('Schedule an Event');
 
     modal.addComponents(
       new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('event_name').setLabel('Event Name').setStyle(TextInputStyle.Short).setRequired(true)),
-      new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('event_date').setLabel('Date (YYYY-MM-DD)').setStyle(TextInputStyle.Short).setRequired(true)),
-      new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('event_time').setLabel('UTC Time (HH:MM)').setStyle(TextInputStyle.Short).setRequired(true))
+      new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('event_date').setLabel('Date (YYYY-MM-DD)').setStyle(TextInputStyle.Short).setPlaceholder('2024-05-20').setRequired(true)),
+      new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('event_time').setLabel('Time (HH:MM in UTC)').setStyle(TextInputStyle.Short).setPlaceholder('14:30').setRequired(true))
     );
     return interaction.showModal(modal);
   }
