@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, PermissionFlagsBits } = require('discord.js');
 const logger = require('../../utils/logger');
 
 module.exports = {
@@ -8,10 +8,7 @@ module.exports = {
     .addSubcommand(subcommand =>
       subcommand
         .setName('add')
-        .setDescription('Add an alliance to the NAP list (R4/R5 only)')
-        .addStringOption(option => option.setName('tag').setDescription('Main Alliance Tag (e.g. K99)').setRequired(true))
-        .addStringOption(option => option.setName('academy_tag').setDescription('Academy Alliance Tag (e.g. K99a)').setRequired(false))
-        .addIntegerOption(option => option.setName('days').setDescription('Temporary NAP expiration in days').setRequired(false))
+        .setDescription('Add an alliance to the NAP list via Pop-up Form (R4/R5 only)')
     )
     .addSubcommand(subcommand =>
       subcommand
@@ -40,24 +37,16 @@ module.exports = {
       }
 
       if (subcommand === 'add') {
-        const tag = interaction.options.getString('tag').toUpperCase().substring(0, 5);
-        const academyTagInput = interaction.options.getString('academy_tag');
-        const academyTag = academyTagInput ? academyTagInput.toUpperCase().substring(0, 5) : null;
-        const days = interaction.options.getInteger('days');
-        
-        let expiresAt = null;
-        if (days) {
-          expiresAt = new Date();
-          expiresAt.setDate(expiresAt.getDate() + days);
-        }
+        const modal = new ModalBuilder()
+          .setCustomId('modal_nap')
+          .setTitle('🛡️ Add Alliance to NAP');
 
-        await client.prisma.nAPAlliance.upsert({
-          where: { guild_id_tag: { guild_id: guildId, tag: tag } },
-          update: { expires_at: expiresAt, added_by: interaction.user.id, academy_tag: academyTag },
-          create: { guild_id: guildId, tag: tag, academy_tag: academyTag, added_by: interaction.user.id, expires_at: expiresAt }
-        });
+        modal.addComponents(
+          new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('main_tag').setLabel('Main Alliance Tag (Max 5 chars)').setStyle(TextInputStyle.Short).setRequired(true)),
+          new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('academy_tag').setLabel('Academy Tag (Optional)').setStyle(TextInputStyle.Short).setRequired(false))
+        );
 
-        await interaction.reply({ content: `✅ **[${tag}]** ${academyTag ? `(and Academy **[${academyTag}]**)` : ''} has been added to the NAP Safe List.${days ? ` (Expires in ${days} days)` : ''}` });
+        return await interaction.showModal(modal);
       }
 
       if (subcommand === 'remove') {

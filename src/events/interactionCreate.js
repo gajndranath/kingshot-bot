@@ -35,6 +35,54 @@ module.exports = {
         return interaction.reply({ content: '✅ The AI message has been updated!', flags: 64 });
       }
 
+      if (interaction.customId === 'modal_announce') {
+        const title = interaction.fields.getTextInputValue('announce_title');
+        const message = interaction.fields.getTextInputValue('announce_message');
+        let image = null;
+        try { image = interaction.fields.getTextInputValue('announce_image'); } catch(e){}
+
+        const admin = await client.prisma.member.findUnique({
+          where: { discord_id_guild_id: { discord_id: interaction.user.id, guild_id: interaction.guildId } }
+        });
+
+        const embed = new EmbedBuilder()
+          .setTitle(`📢 ${title}`)
+          .setDescription(message)
+          .setColor('#FFD700')
+          .setAuthor({ name: interaction.guild.name, iconURL: interaction.guild.iconURL() })
+          .setFooter({ text: `Announced by ${admin ? admin.in_game_name : interaction.user.username} (${admin ? admin.role : 'Admin'})` })
+          .setTimestamp();
+
+        if (image && image.startsWith('http')) {
+          embed.setImage(image);
+        }
+
+        await interaction.reply({ content: '@everyone', embeds: [embed] });
+        return;
+      }
+
+      if (interaction.customId === 'modal_botissue') {
+        const description = interaction.fields.getTextInputValue('issue_description');
+        let image = null;
+        try { image = interaction.fields.getTextInputValue('issue_image_url'); } catch(e){}
+
+        await interaction.deferReply({ flags: 64 });
+        try {
+          await client.prisma.feedback.create({
+            data: { guild_id: interaction.guildId, user_id: interaction.user.id, issue_text: description, is_resolved: false }
+          });
+          const embed = new EmbedBuilder()
+            .setTitle('✅ Feedback Submitted')
+            .setDescription(`Thank you <@${interaction.user.id}>! Your issue has been logged directly to the Developer's Admin Portal.`)
+            .setColor('#10b981').setTimestamp();
+          if (image && image.startsWith('http')) embed.setImage(image);
+          return interaction.editReply({ embeds: [embed] });
+        } catch (error) {
+          logger.error(error, 'Error logging feedback');
+          return interaction.editReply('❌ Failed to submit feedback to the portal.');
+        }
+      }
+
       if (interaction.customId === 'modal_schedule') {
         const name = interaction.fields.getTextInputValue('event_name');
         const dateStr = interaction.fields.getTextInputValue('event_date');
@@ -316,6 +364,30 @@ async function handleButtonInteraction(interaction, client) {
       new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('academy_tag').setLabel('Academy Tag (Optional)').setStyle(TextInputStyle.Short).setRequired(false).setMaxLength(5))
     );
     return interaction.showModal(modal);
+  }
+
+  if (customId.startsWith('guide_')) {
+    const embed = new EmbedBuilder().setColor('#3498db').setTimestamp();
+    
+    if (customId === 'guide_bear_hunt') {
+      embed.setTitle('🐻 Bear Hunt Strategy Guide')
+           .setDescription('**Objective:** Deal maximum damage to the Bear in 30 minutes.\n\n**Troop Requirements:**\n- **Send ONLY Infantry or Lancers.**\n- **NO SIEGE ENGINES.** Siege slows down the rally.\n- Ensure you are sending your highest tier troops.\n\n**Rally Rules:**\n- Only R4/R5 and top power players should start rallies.\n- Join the rallies of the strongest players first.\n- Use a damage boost buff before the event starts.\n\n**Pro Tip:** If you cannot fill a rally, spread your troops evenly across multiple strong rallies to maximize the alliance score.');
+    } else if (customId === 'guide_castle_siege') {
+      embed.setTitle('🏰 Castle Siege Strategy Guide')
+           .setDescription('**Objective:** Capture and hold the central Castle and 4 Turrets.\n\n**Troop Requirements:**\n- Follow the rally leader\'s instructions carefully.\n- Generally, standard balanced formations (Infantry, Lancer, Marksman) are required.\n- Send your best Heroes that match the troop type you are sending.\n\n**Rules:**\n- **Do NOT attack solo.** Always join a rally.\n- If you are zeroed or low on troops, focus on reinforcing held turrets instead of attacking.\n- Keep your shields up until you are ready to attack.\n\n**Pro Tip:** Speed up your rallies if you are contesting an objective that is about to fall.');
+    } else if (customId === 'guide_kvk') {
+      embed.setTitle('⚔️ State vs State (KvK) Strategy Guide')
+           .setDescription('**Objective:** Defend our State and conquer the enemy State.\n\n**Preparation:**\n- Gather resources and heal all troops before the event begins.\n- Bubble (Shield) immediately if you are not actively participating in attacks.\n- Port to the enemy state only in coordinated groups.\n\n**Combat:**\n- **NEVER attack farms or weak alliances** unless authorized by the Supreme Commander.\n- Focus on capturing the enemy\'s Sunfire Castle and Turrets.\n- Reinforce our own Castle if it is under attack.\n\n**Pro Tip:** Use anti-scout items to hide your troop counts from enemy whales.');
+    } else if (customId === 'guide_facility') {
+      embed.setTitle('🛡️ Facility/Fortress Strategy Guide')
+           .setDescription('**Objective:** Capture Alliance Facilities for passive buffs.\n\n**Deployment:**\n- Be online 10 minutes before the Facility shield drops.\n- R4/R5 will assign specific members to lead the rallies.\n- Fill the rallies as fast as possible. Use speedups!\n\n**Defending:**\n- Once captured, immediately reinforce the Facility with your strongest troops.\n- The first 30 minutes are crucial. Do not recall your troops until the Facility is fully secured.\n\n**Pro Tip:** Assign one member to purely watch for incoming enemy rallies and alert the alliance in chat.');
+    }
+
+    const editBtn = new ActionRowBuilder().addComponents(
+      new ButtonBuilder().setCustomId('edit_ai_message').setLabel('Edit Guide (R4/R5)').setStyle(ButtonStyle.Secondary)
+    );
+
+    return interaction.reply({ embeds: [embed], components: [editBtn], flags: 64 });
   }
 
   if (customId.startsWith('approve_') || customId.startsWith('reject_')) {
