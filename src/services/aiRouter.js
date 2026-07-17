@@ -1,7 +1,7 @@
 const crypto = require('crypto');
 const logger = require('../utils/logger');
 
-const AI_BRAIN_URL = 'http://localhost:8000/api';
+const AI_BRAIN_URL = process.env.AI_BRAIN_URL || 'http://localhost:8000/api';
 
 // Simulated memory store for screenshot hashes (In prod, store in Redis or Postgres)
 const processedHashes = new Set();
