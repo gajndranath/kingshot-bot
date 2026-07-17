@@ -1,0 +1,125 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model GuildConfig {
+  guild_id           String        @id
+  kingdom_number     Int?
+  kingdom_age        Int?
+  alliance_tag       String?
+  academy_tag        String?       // NEW: Solo Mode Academy Tag
+  mode               String        @default("SOLO") // "SOLO" or "KINGDOM"
+  alert_channel      String?       // General Alert Channel
+  events_channel     String?       // #events-feed
+  war_room_channel   String?       // #war-room
+  bear_hunt_channel  String?       // #bear-hunt
+  gift_codes_channel String?       // #gift-codes
+  strategy_channel   String?       // #strategy-guides
+  audit_channel      String?       // R4 action logs
+  trivia_channel     String?       // Dead channel revival
+  diplomacy_channel  String?       // NAP Violation Alerts
+  created_at         DateTime      @default(now())
+  updated_at         DateTime      @updatedAt
+  
+  subscription       Subscription?
+  members            Member[]
+  events             Event[]
+  votes              Vote[]
+  nap_alliances      NAPAlliance[]
+}
+
+model NAPAlliance {
+  id          String   @id @default(uuid())
+  guild_id    String
+  tag         String   @db.VarChar(5)
+  academy_tag String?  @db.VarChar(5) // NEW: Kingdom Mode Academy Tag
+  added_by    String   // Discord ID of R5 who added it
+  expires_at  DateTime?
+  created_at  DateTime @default(now())
+
+  guild       GuildConfig @relation(fields: [guild_id], references: [guild_id], onDelete: Cascade)
+
+  @@unique([guild_id, tag])
+}
+
+model Subscription {
+  id              String      @id @default(uuid())
+  guild_id        String      @unique
+  guild           GuildConfig @relation(fields: [guild_id], references: [guild_id], onDelete: Cascade)
+  is_premium      Boolean     @default(false)
+  plan_type       String      @default("TRIAL") // "TRIAL", "MONTHLY", "LIFETIME"
+  payment_status  String      @default("PENDING") // "PENDING", "COMPLETED", "FRAUD"
+  transaction_id  String?     @unique
+  trial_expires   DateTime
+  created_at      DateTime    @default(now())
+  updated_at      DateTime    @updatedAt
+}
+
+model SuperAdmin {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  password_hash String
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+}
+
+model Member {
+  id              String      @id @default(uuid())
+  discord_id      String
+  guild_id        String
+  guild           GuildConfig @relation(fields: [guild_id], references: [guild_id], onDelete: Cascade)
+  in_game_name    String
+  alliance_tag    String?     // E.g., [K99] - Used mostly in Kingdom Mode
+  alliance_type   String      @default("MAIN") // NEW: MAIN or ACADEMY
+  role            String      @default("MEMBER") // "R4", "R5", "MEMBER"
+  is_verified     Boolean     @default(false)
+  is_weekend_warrior Boolean  @default(false)
+  has_used_free_kvk Boolean   @default(false)
+  activity_score  Int         @default(0)
+  last_active     DateTime    @default(now())
+  last_checkin    DateTime?
+  created_at      DateTime    @default(now())
+  updated_at      DateTime    @updatedAt
+
+  @@unique([discord_id, guild_id])
+}
+
+model Event {
+  id              String      @id @default(uuid())
+  guild_id        String
+  guild           GuildConfig @relation(fields: [guild_id], references: [guild_id], onDelete: Cascade)
+  name            String
+  description     String?
+  scheduled_time  DateTime
+  channel_id      String?
+  created_by      String
+  reminder_sent   Boolean     @default(false)
+  
+  rsvps           EventRSVP[]
+}
+
+model EventRSVP {
+  id          String   @id @default(uuid())
+  event_id    String
+  discord_id  String
+  troop_type  String   // "INFANTRY", "LANCER", "MARKSMAN"
+  created_at  DateTime @default(now())
+  
+  event       Event    @relation(fields: [event_id], references: [id], onDelete: Cascade)
+  
+  @@unique([event_id, discord_id])
+}
+
+model Vote {
+  id              String      @id @default(uuid())
+  guild_id        String
+  guild           GuildConfig @relation(fields: [guild_id], references: [guild_id], onDelete: Cascade)
+  topic           String
+  restricted_to   String      // e.g., "R4"
+  closes_at       DateTime
+}
