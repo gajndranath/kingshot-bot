@@ -2,6 +2,7 @@ const { ContextMenuCommandBuilder, ApplicationCommandType, EmbedBuilder } = requ
 const logger = require('../../utils/logger');
 const translationCache = require('../../utils/translationCache');
 const { checkRateLimit } = require('../../middlewares/rateLimit');
+const translate = require('google-translate-api-x');
 
 module.exports = {
   data: new ContextMenuCommandBuilder()
@@ -17,7 +18,6 @@ module.exports = {
     try {
       const targetMessage = interaction.targetMessage;
       let textToTranslate = targetMessage.content;
-      const targetLocale = interaction.locale; // The native language of the user's Discord app
       
       if (!textToTranslate || textToTranslate.trim() === '') {
         return interaction.editReply('❌ There is no text in this message to translate.');
@@ -27,54 +27,26 @@ module.exports = {
         return interaction.editReply('❌ **Message too long!** The translator only supports up to 1000 characters per message.');
       }
 
-      // 1. Check Memory Cache
-      const cachedTranslation = translationCache.get(targetMessage.id, targetLocale);
-      if (cachedTranslation) {
-        const embed = new EmbedBuilder()
-          .setColor('#0099ff')
-          .setDescription(cachedTranslation)
-          .setFooter({ text: `Translated to ${targetLocale} (Cached) ⚡` });
-        return interaction.editReply({ embeds: [embed] });
-      }
-
-      // 2. Fetch from AI Brain
-      const AI_BRAIN_URL = process.env.AI_BRAIN_URL || 'http://localhost:8000/api';
-      const AI_BRAIN_API_KEY = process.env.AI_BRAIN_API_KEY || 'default-dev-key';
-      const response = await fetch(`${AI_BRAIN_URL}/translate`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'X-API-Key': AI_BRAIN_API_KEY 
-        },
-        body: JSON.stringify({ text: textToTranslate, target_language: targetLocale })
-      });
-
-      if (!response.ok) {
-        return interaction.editReply({ content: '❌ Failed to reach the AI Translation Engine.' });
-      }
-
-      const result = await response.json();
+      // Detect user's Discord app language (e.g., 'en-US' -> 'en')
+      let targetLang = interaction.locale.split('-')[0];
       
-      if (result.status === 'error') {
-        return interaction.editReply({ content: `❌ **Translation Error:** ${result.message}` });
-      }
+      // Fallback to English if locale is missing
+      if (!targetLang) targetLang = 'en';
 
-      const translatedText = result.translation;
+      // Call Google Translate Free API directly from Node.js (No AI Tokens used!)
+      const res = await translate(textToTranslate, { to: targetLang });
 
-      // 3. Save to Cache
-      translationCache.set(targetMessage.id, targetLocale, translatedText);
-
-      // 4. Send Ephemeral Embed
       const embed = new EmbedBuilder()
-        .setColor('#0099ff')
-        .setDescription(translatedText)
-        .setFooter({ text: `Translated to ${targetLocale} via AI 🌐` });
+        .setColor('#1ABC9C')
+        .setTitle('🌍 Translation (Free Tier)')
+        .setDescription(res.text)
+        .setFooter({ text: `Translated from ${res.from.language.iso.toUpperCase()} to ${targetLang.toUpperCase()}` });
 
-      await interaction.editReply({ embeds: [embed] });
+      return interaction.editReply({ embeds: [embed] });
 
     } catch (error) {
-      logger.error(error, 'Translation Context Menu Error');
-      await interaction.editReply({ content: 'An error occurred during translation.' });
+      logger.error(error, 'Translation Error');
+      return interaction.editReply('❌ Translation failed. Please try again later.');
     }
-  }
+  },
 };
