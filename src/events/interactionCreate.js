@@ -126,11 +126,6 @@ module.exports = {
       }
 
       if (interaction.customId === 'modal_nap') {
-        const config = await client.prisma.guildConfig.findUnique({ where: { guild_id: interaction.guildId } });
-        if (!config || config.mode !== 'KINGDOM') {
-          return interaction.reply({ content: '❌ NAP Management is only available in Kingdom Mode.', flags: 64 });
-        }
-
         const tag = interaction.fields.getTextInputValue('main_tag').toUpperCase();
         let academyTag = null;
         try { academyTag = interaction.fields.getTextInputValue('academy_tag').toUpperCase(); } catch(e){}

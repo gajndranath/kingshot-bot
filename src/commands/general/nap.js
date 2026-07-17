@@ -4,7 +4,7 @@ const logger = require('../../utils/logger');
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('nap')
-    .setDescription('Manage the Kingdom Non-Aggression Pact (NAP) safe list.')
+    .setDescription('Manage your Alliance Non-Aggression Pact (NAP) safe list.')
     .addSubcommand(subcommand =>
       subcommand
         .setName('add')
