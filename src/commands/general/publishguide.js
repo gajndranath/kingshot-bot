@@ -21,7 +21,21 @@ module.exports = {
         .setImage('https://i.imgur.com/8Q5Y2zL.png')
         .setFooter({ text: 'Part 1: General Commands' });
 
-      // Embed 2: R4/R5 Management & Setup
+      // Embed 2: Server Architecture
+      const architectureEmbed = new EmbedBuilder()
+        .setTitle('🏗️ RECOMMENDED CHANNEL ARCHITECTURE')
+        .setColor('#9B59B6')
+        .setDescription('To keep your server organized and the bot functioning perfectly, we recommend setting up these specific channels:')
+        .addFields(
+          { name: '🛂 #verification (Read-Only)', value: 'Use `/publish-verify` here. This is where new players will click the button to link their in-game name and get their roles.' },
+          { name: '📢 #announcements (Read-Only)', value: 'Use `/announce` here to post official gold-bordered messages to everyone.' },
+          { name: '📅 #events-feed', value: 'Use the `/control-panel` to schedule KvK or Bear Hunts, and the RSVP cards will go here.' },
+          { name: '🤖 #bot-commands', value: 'A general spam channel where members should use `/report-reward`, `/reporthit`, and `/reportdonation`.' },
+          { name: '🛡️ #nap-alerts (R4/R5 Only)', value: 'Set this as your diplomacy channel in `/setup`. Any NAP violations caught by the bot will be alerted here secretly.' },
+          { name: '📝 #r4-audit-log (R4/R5 Only)', value: 'Set this as your audit channel in `/setup`. The bot logs all kicks, bans, and role changes here.' }
+        );
+
+      // Embed 3: R4/R5 Management & Setup
       const adminEmbed = new EmbedBuilder()
         .setTitle('⚙️ R4 & R5 MANAGEMENT SUITE')
         .setColor('#E74C3C')
@@ -31,7 +45,7 @@ module.exports = {
           { name: 'Role Management', value: '- `/promote @user [R4/R5]`: Give a member R4/R5 powers.\n- `/demote @user`: Strip an R4 of their powers.' }
         );
 
-      // Embed 3: Kingdom & Diplomacy
+      // Embed 4: Kingdom & Diplomacy
       const kingdomEmbed = new EmbedBuilder()
         .setTitle('🛡️ KINGDOM & DIPLOMACY SCANNERS')
         .setColor('#3498DB')
@@ -41,7 +55,7 @@ module.exports = {
           { name: 'Global Health', value: '- `/global-stats`: Displays global bot metrics.' }
         );
 
-      // Embed 4: Security & Premium AI
+      // Embed 5: Security & Premium AI
       const secEmbed = new EmbedBuilder()
         .setTitle('🤖 SECURITY & PREMIUM AI TOOLS')
         .setColor('#2ECC71')
@@ -53,7 +67,7 @@ module.exports = {
         .setFooter({ text: 'Powered by Kingshot OS' });
 
       // Send all embeds into the channel
-      await interaction.channel.send({ embeds: [introEmbed, adminEmbed, kingdomEmbed, secEmbed] });
+      await interaction.channel.send({ embeds: [introEmbed, architectureEmbed, adminEmbed, kingdomEmbed, secEmbed] });
 
     } catch (error) {
       logger.error(error, 'Publish Guide Error');

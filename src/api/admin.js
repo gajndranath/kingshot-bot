@@ -115,22 +115,110 @@ router.put('/feedbacks/:id/resolve', verifyToken, async (req, res) => {
   }
 });
 
-// 4. Update Subscription (Anti-Fraud & Manual Override)
+// ==========================================
+// NEW: ADVANCED BILLING & FRAUD SYSTEM
+// ==========================================
+
+// 4.1 Get All Plans
+router.get('/plans', verifyToken, async (req, res) => {
+  const plans = await req.prisma.subscriptionPlan.findMany({ orderBy: { created_at: 'asc' } });
+  res.json(plans);
+});
+
+// 4.2 Create or Update Plan
+router.post('/plans', verifyToken, async (req, res) => {
+  const { id, name, price, billing_cycle, trial_days, features } = req.body;
+  
+  try {
+    let plan;
+    if (id) {
+      plan = await req.prisma.subscriptionPlan.update({
+        where: { id },
+        data: { name, price: parseFloat(price), billing_cycle, trial_days: parseInt(trial_days), features }
+      });
+    } else {
+      plan = await req.prisma.subscriptionPlan.create({
+        data: { name, price: parseFloat(price), billing_cycle, trial_days: parseInt(trial_days), features }
+      });
+    }
+    res.json(plan);
+  } catch(e) {
+    res.status(500).json({ error: 'Failed to save plan' });
+  }
+});
+
+// 4.3 Delete Plan
+router.delete('/plans/:id', verifyToken, async (req, res) => {
+  try {
+    await req.prisma.subscriptionPlan.delete({ where: { id: req.params.id } });
+    res.json({ success: true });
+  } catch(e) {
+    res.status(500).json({ error: 'Failed to delete plan' });
+  }
+});
+
+// 4.4 Get Payment History & Fraud
+router.get('/payments', verifyToken, async (req, res) => {
+  const payments = await req.prisma.paymentRecord.findMany({
+    orderBy: { created_at: 'desc' },
+    include: { plan: true }
+  });
+  res.json(payments);
+});
+
+// 4.5 Manually Log Payment or Fraud Attempt
+router.post('/payments/log', verifyToken, async (req, res) => {
+  const { guild_id, user_id, plan_id, amount_paid, payment_method, status, transaction_id, notes } = req.body;
+
+  try {
+    const record = await req.prisma.paymentRecord.create({
+      data: {
+        guild_id, user_id, plan_id, amount_paid: parseFloat(amount_paid), payment_method, status, transaction_id, notes
+      }
+    });
+
+    // If it's a completed payment, update their Subscription status
+    if (status === 'COMPLETED') {
+      const plan = await req.prisma.subscriptionPlan.findUnique({ where: { id: plan_id } });
+      let expires = new Date();
+      if (plan.billing_cycle === 'MONTHLY') expires.setMonth(expires.getMonth() + 1);
+      else if (plan.billing_cycle === 'YEARLY') expires.setFullYear(expires.getFullYear() + 1);
+      else if (plan.billing_cycle === 'ONE_TIME') expires.setFullYear(expires.getFullYear() + 99); // practically lifetime
+      
+      await req.prisma.subscription.upsert({
+        where: { guild_id },
+        update: { is_premium: true, plan_id: plan.id, status: 'ACTIVE', trial_expires: expires },
+        create: { guild_id, is_premium: true, plan_id: plan.id, status: 'ACTIVE', trial_expires: expires }
+      });
+    } else if (status === 'FRAUD_ATTEMPT') {
+      // Lock them out immediately
+      await req.prisma.subscription.upsert({
+        where: { guild_id },
+        update: { status: 'FRAUD', is_premium: false },
+        create: { guild_id, status: 'FRAUD', is_premium: false }
+      });
+    }
+
+    res.json(record);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to log payment' });
+  }
+});
+
+// 4.6 Manual Subscription Override (Old compatibility / quick block)
 router.put('/subscription/:guild_id', verifyToken, async (req, res) => {
   const { guild_id } = req.params;
-  const { is_premium, plan_type, payment_status, transaction_id } = req.body;
+  const { is_premium, status } = req.body;
 
   try {
     const sub = await req.prisma.subscription.upsert({
       where: { guild_id },
-      update: { is_premium, plan_type, payment_status, transaction_id },
+      update: { is_premium, status },
       create: { 
         guild_id, 
         is_premium, 
-        plan_type, 
-        payment_status, 
-        transaction_id,
-        trial_expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days from now
+        status, 
+        trial_expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
       }
     });
     res.json({ success: true, subscription: sub });

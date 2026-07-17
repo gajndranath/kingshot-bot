@@ -50,17 +50,45 @@ model NAPAlliance {
   @@unique([guild_id, tag])
 }
 
+model SubscriptionPlan {
+  id            String   @id @default(uuid())
+  name          String   @unique // e.g., "Basic", "Premium", "Monthly", "Lifetime"
+  price         Float    @default(0.0)
+  billing_cycle String   @default("MONTHLY") // "ONE_TIME", "MONTHLY", "YEARLY"
+  trial_days    Int      @default(0) // 0 means no trial
+  features      String?  // JSON string or comma separated features
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  subscriptions Subscription[]
+  payments      PaymentRecord[]
+}
+
 model Subscription {
   id              String      @id @default(uuid())
   guild_id        String      @unique
   guild           GuildConfig @relation(fields: [guild_id], references: [guild_id], onDelete: Cascade)
+  plan_id         String?
+  plan            SubscriptionPlan? @relation(fields: [plan_id], references: [id])
   is_premium      Boolean     @default(false)
-  plan_type       String      @default("TRIAL") // "TRIAL", "MONTHLY", "LIFETIME"
-  payment_status  String      @default("PENDING") // "PENDING", "COMPLETED", "FRAUD"
-  transaction_id  String?     @unique
-  trial_expires   DateTime
+  status          String      @default("TRIAL") // "TRIAL", "ACTIVE", "EXPIRED", "FRAUD"
+  trial_expires   DateTime?
   created_at      DateTime    @default(now())
   updated_at      DateTime    @updatedAt
+}
+
+model PaymentRecord {
+  id              String      @id @default(uuid())
+  guild_id        String
+  user_id         String      // Discord ID of the person who paid
+  plan_id         String
+  plan            SubscriptionPlan @relation(fields: [plan_id], references: [id])
+  amount_paid     Float
+  payment_method  String      @default("MANUAL") // "MANUAL", "STRIPE", "PAYPAL"
+  status          String      @default("COMPLETED") // "COMPLETED", "FAILED", "FRAUD_ATTEMPT"
+  transaction_id  String?     @unique
+  notes           String?
+  created_at      DateTime    @default(now())
 }
 
 model SuperAdmin {
