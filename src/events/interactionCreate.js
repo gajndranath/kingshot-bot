@@ -96,7 +96,7 @@ module.exports = {
 
         await targetChannel.send({ embeds: [embed], components: [editRow] });
         
-        return interaction.reply({ content: `✅ Guide posted successfully to <#${targetChannel.id}>.`, flags: 64 });
+        return interaction.update({ content: `✅ Guide posted successfully to <#${targetChannel.id}>.`, embeds: [], components: [] });
       }
 
       if (customId === 'open_schedule_modal') {
@@ -259,7 +259,7 @@ module.exports = {
         await targetChannel.send({ content: '@everyone', embeds: [embed] });
         
         if (targetChannel.id !== interaction.channelId) {
-           return interaction.reply({ content: `✅ Announcement successfully posted in <#${targetChannel.id}>.`, flags: 64 });
+           return interaction.update({ content: `✅ Announcement successfully posted in <#${targetChannel.id}>.`, embeds: [], components: [] });
         } else {
            return interaction.reply({ content: '✅ Announcement posted.', flags: 64 });
         }
@@ -350,8 +350,8 @@ module.exports = {
 
           await targetChannel.send({ content: '@everyone', embeds: [embed], components: [row] });
           
-          if (targetChannel.id !== interaction.channelId) {
-             return interaction.reply({ content: `✅ Event scheduled successfully. Details posted in <#${targetChannel.id}>.`, flags: 64 });
+          if (targetId !== 'DEFAULT') {
+             return interaction.update({ content: `✅ Event scheduled successfully. Details posted in <#${targetChannel.id}>.`, embeds: [], components: [] });
           } else {
              return interaction.reply({ content: '✅ Event scheduled successfully.', flags: 64 });
           }
@@ -959,8 +959,7 @@ async function handleButtonInteraction(interaction, client) {
     );
 
     const newEmbed = EmbedBuilder.from(oldEmbed).setDescription(newDesc);
-    await interaction.message.edit({ embeds: [newEmbed] });
-    await interaction.reply({ content: `✅ Successfully RSVP'd as **${troopType}**.`, flags: 64 });
+    await interaction.update({ embeds: [newEmbed] });
 
   } else if (customId.startsWith('join_rally_')) {
     // Handle silent engagement for rallies
