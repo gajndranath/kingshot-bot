@@ -102,10 +102,20 @@ module.exports = {
           data: { is_verified: true, role: 'R5' }
         });
         
+        try {
+          const discordMember = await interaction.guild.members.fetch(interaction.user.id).catch(() => null);
+          if (discordMember) {
+            const nickname = allianceTag ? `[${allianceTag}] ${inGameName} - R5` : `${inGameName} - R5`;
+            await discordMember.setNickname(nickname.substring(0, 32));
+          }
+        } catch (err) {
+          logger.warn('Could not rename Server Owner due to Discord Permission Hierarchy.');
+        }
+
         embed.setTitle('🛡️ New Registration Request (AUTO-APPROVED)')
              .setDescription(`User <@${interaction.user.id}> is the Server Owner and was automatically verified as R5.`);
         await alertChannel.send({ embeds: [embed] });
-        return interaction.editReply(`👑 **Server Owner Recognized!** You have been automatically verified as **${inGameName} (R5)**.`);
+        return interaction.editReply(`👑 **Server Owner Recognized!** You have been automatically verified as **${inGameName} (R5)**.\n*(Note: Discord does not allow bots to change the Server Owner's nickname, so you may need to update it manually!)*`);
       }
 
       // **SECURITY BYPASS 2: Auto-Migration for Existing Servers**
@@ -123,6 +133,13 @@ module.exports = {
             data: { is_verified: true }
           });
           
+          try {
+            const nickname = allianceTag ? `[${allianceTag}] ${inGameName} - ${role}` : `${inGameName} - ${role}`;
+            await discordMember.setNickname(nickname.substring(0, 32));
+          } catch (err) {
+            logger.warn('Could not rename Auto-Migrated user.');
+          }
+
           embed.setTitle('🛡️ New Registration Request (AUTO-MIGRATED)')
                .setDescription(`User <@${interaction.user.id}> already held an official Discord Role. They have been Auto-Verified.`);
           await alertChannel.send({ embeds: [embed] });
