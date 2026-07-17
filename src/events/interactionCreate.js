@@ -1,6 +1,10 @@
 const logger = require('../utils/logger');
 const { EmbedBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, ButtonBuilder, ButtonStyle, PermissionFlagsBits } = require('discord.js');
 
+// UI State Memory Cache (In-Memory)
+// Key: interaction.message.id, Value: { channelId: 'DEFAULT', template: 'none' }
+const uiStateCache = new Map();
+
 module.exports = {
   name: 'interactionCreate',
   /**
@@ -9,7 +13,92 @@ module.exports = {
    * @param {import('discord.js').Client} client 
    */
   async execute(interaction, client) {
+    if (interaction.isChannelSelectMenu()) {
+      if (interaction.customId === 'ui_announce_channel') {
+        const msgId = interaction.message.id;
+        const channelId = interaction.values[0];
+        
+        let state = uiStateCache.get(msgId) || { channelId: 'DEFAULT', template: 'none' };
+        state.channelId = channelId;
+        uiStateCache.set(msgId, state);
+
+        return interaction.reply({ content: `✅ Target Channel updated to <#${channelId}>. Now click **Proceed**.`, flags: 64 });
+      }
+    }
+
+    if (interaction.isStringSelectMenu()) {
+      if (interaction.customId === 'ui_announce_template') {
+        const msgId = interaction.message.id;
+        const template = interaction.values[0];
+        
+        let state = uiStateCache.get(msgId) || { channelId: 'DEFAULT', template: 'none' };
+        state.template = template;
+        uiStateCache.set(msgId, state);
+
+        return interaction.reply({ content: `✅ Template updated. Now click **Proceed**.`, flags: 64 });
+      }
+    }
+
     if (interaction.isButton()) {
+      const customId = interaction.customId;
+
+      if (customId === 'open_announce_modal') {
+        const msgId = interaction.message.id;
+        const state = uiStateCache.get(msgId) || { channelId: 'DEFAULT', template: 'none' };
+        
+        const modalId = `modal_announce_${state.channelId}`;
+        const modal = new ModalBuilder()
+          .setCustomId(modalId)
+          .setTitle('📢 Create Announcement');
+
+        let defaultTitle = '';
+        let defaultMessage = '';
+
+        if (state.template === 'nap_reminder') {
+          defaultTitle = '⚠️ IMPORTANT: Do NOT hit NAP Alliances!';
+          defaultMessage = 'Please double check alliance tags before attacking. Hitting alliances on our NAP (Non-Aggression Pact) safe list will result in strict punishment or expulsion. Check the #nap-list channel if you are unsure.';
+        } else if (state.template === 'power_up') {
+          defaultTitle = '💪 Power Up Reminder!';
+          defaultMessage = 'Don\'t forget to use your speedups, train troops, upgrade your buildings, and complete your research. We need everyone at maximum power for upcoming events!';
+        } else if (state.template === 'train_troops') {
+          defaultTitle = '🛡️ Troop Training Order';
+          defaultMessage = 'All members must prioritize training troops right now. Do not let your barracks sit idle. We need high tier troops for rallies and defense.';
+        } else if (state.template === 'event_start') {
+          defaultTitle = '⚔️ Event Starting Soon!';
+          defaultMessage = 'Our scheduled event is starting soon! Please get online, use your buffs, and join the rallies. Follow instructions in the event channel.';
+        }
+
+        const titleInput = new TextInputBuilder()
+          .setCustomId('announce_title')
+          .setLabel('Title')
+          .setStyle(TextInputStyle.Short)
+          .setPlaceholder('e.g. Alliance Rules Update')
+          .setRequired(true);
+        if (defaultTitle) titleInput.setValue(defaultTitle);
+
+        const messageInput = new TextInputBuilder()
+          .setCustomId('announce_message')
+          .setLabel('Announcement Message')
+          .setStyle(TextInputStyle.Paragraph)
+          .setPlaceholder('Type your official announcement here...')
+          .setRequired(true);
+        if (defaultMessage) messageInput.setValue(defaultMessage);
+
+        const imageInput = new TextInputBuilder()
+          .setCustomId('announce_image')
+          .setLabel('Image URL (Optional)')
+          .setStyle(TextInputStyle.Short)
+          .setPlaceholder('https://example.com/image.png')
+          .setRequired(false);
+
+        modal.addComponents(
+          new ActionRowBuilder().addComponents(titleInput),
+          new ActionRowBuilder().addComponents(messageInput),
+          new ActionRowBuilder().addComponents(imageInput)
+        );
+
+        return interaction.showModal(modal);
+      }
       return handleButtonInteraction(interaction, client);
     }
 
