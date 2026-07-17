@@ -53,8 +53,9 @@ adminApp.use((req, res, next) => {
 });
 adminApp.use('/admin', adminRouter);
 
-adminApp.listen(4000, async () => {
-  logger.info('🛡️ Super Admin API listening on port 4000');
+const PORT = process.env.PORT || 4000;
+adminApp.listen(PORT, async () => {
+  logger.info(`🛡️ Super Admin API listening on port ${PORT}`);
   await seedAdmin(prisma);
 });
 
