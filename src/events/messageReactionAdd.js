@@ -3,7 +3,7 @@ const logger = require('../utils/logger');
 const { OpenAI } = require('openai');
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+  apiKey: process.env.OPENAI_API_KEY || 'MISSING_API_KEY', // Prevent crash on boot if env var is missing
 });
 
 // Dictionary of supported country flags and their corresponding languages
