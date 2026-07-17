@@ -42,7 +42,7 @@ const adminApp = express();
 adminApp.use(helmet());
 // Enable CORS for frontend
 adminApp.use(cors({
-  origin: '*', // Change this to your frontend URL in production
+  origin: process.env.FRONTEND_URL || '*', // Securely restrict to Vercel URL
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
 }));
 adminApp.use(express.json());
