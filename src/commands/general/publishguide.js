@@ -41,8 +41,8 @@ module.exports = {
         .setColor('#E74C3C')
         .addFields(
           { name: 'Setup Commands', value: '- `/setup`: Initial bot config (channels, kingdom mode).\n- `/publish-verify`: Spawns the self-verification button.\n- `/checkinsetup`: Setup the daily check-in button.\n- `/weekendwarrior`: Enable the casual player role.' },
-          { name: 'Alliance Tools', value: '- `/control-panel`: Admin UI dashboard.\n- `/alliance-health`: Scan alliance for inactive dead weights (Solo Mode).\n- `/announce`: Post official gold-colored announcements.\n- `/vote`: Create Alliance petitions (Yes/No polls).' },
-          { name: 'Role Management', value: '- `/promote @user [R4/R5]`: Give a member R4/R5 powers.\n- `/demote @user`: Strip an R4 of their powers.' }
+          { name: 'Alliance Tools', value: '- `/control-panel`: Admin UI dashboard.\n- `/alliance-health`: Scan alliance for inactive dead weights (Solo Mode).\n- `/announce`: Post official gold-colored announcements.\n- `/vote`: Create Alliance petitions (Yes/No polls).\n- `/edit-event`: Modify an existing scheduled event.' },
+          { name: 'Role Management', value: '- `/promote @user [R4/R5]`: Give a member R4/R5 powers.\n- `/demote @user`: Strip an R4 of their powers.\n- `/edit member`: R4 quick-edit console to fix roles.' }
         );
 
       // Embed 4: Kingdom & Diplomacy
@@ -52,7 +52,7 @@ module.exports = {
         .addFields(
           { name: 'NAP Management', value: '- `/control-panel`: Click Manage NAP to add/remove alliances.' },
           { name: 'AI Image Scanners', value: '- `/reporthit`: Upload battle screenshot. AI checks for NAP violations.\n- `/reportdonation`: Upload tech leaderboard. AI extracts donation points.\n- `/report-reward`: AI scans your event rewards screenshot.' },
-          { name: 'Global Health', value: '- `/global-stats`: Displays global bot metrics.' }
+          { name: 'Global Health & Analytics', value: '- `/server-health`: Analyzes the total active players and alliances in your State/Kingdom.\n- `/global-stats`: Displays global bot metrics.\n- `/export`: Export Alliance Members or RSVPs to an Excel/CSV file (KvK ready).' }
         );
 
       // Embed 5: Security & Premium AI
@@ -62,7 +62,7 @@ module.exports = {
         .addFields(
           { name: 'Ban System (Permanent ID)', value: '- `/ban-player [ID]`: Permanently blacklist a player\'s ID.\n- `/unban-player [ID]`: Remove a player from the blacklist.' },
           { name: 'Premium AI Tools', value: '- `/advisor`: Ask game strategy questions.\n- `/analyzer`: AI analyzes battle reports.\n- `/hospital`: Calculate troop healing times.\n- `/kvk`: AI generates KvK strategy.' },
-          { name: 'Premium Subscriptions', value: 'Want to upgrade your alliance? Run `/premium` (Coming Soon) to unlock unlimited AI tokens!' }
+          { name: 'Premium Subscriptions', value: 'Want to upgrade your alliance? Use the Web Admin Panel to purchase unlimited AI tokens!' }
         )
         .setFooter({ text: 'Powered by Kingshot OS' });
 
