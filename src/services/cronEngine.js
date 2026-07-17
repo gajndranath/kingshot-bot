@@ -199,6 +199,59 @@ function initCronEngine(client) {
       logger.error(error, 'Error in NAP Expiry Cron Job');
     }
   });
+
+  // 6. Scheduled Event Reminders (Runs every minute)
+  cron.schedule('* * * * *', async () => {
+    try {
+      const now = new Date();
+      // Look for events happening in the next 15 minutes that haven't had a reminder sent
+      const upcomingEventTime = new Date(now.getTime() + 15 * 60 * 1000);
+
+      const events = await client.prisma.event.findMany({
+        where: {
+          reminder_sent: false,
+          scheduled_time: {
+            lte: upcomingEventTime,
+            gt: now
+          }
+        },
+        include: { rsvps: true }
+      });
+
+      for (const event of events) {
+        // Find channel
+        const config = await client.prisma.guildConfig.findUnique({ where: { guild_id: event.guild_id } });
+        const channelId = event.channel_id || config?.events_channel || config?.alert_channel;
+        
+        if (channelId) {
+          const channel = await client.channels.fetch(channelId).catch(() => null);
+          if (channel) {
+            // Mention everyone who RSVP'd
+            const rsvpMentions = event.rsvps.map(r => `<@${r.discord_id}>`).join(' ');
+            
+            const embed = new EmbedBuilder()
+              .setTitle(`⏰ Event Reminder: ${event.name}`)
+              .setDescription(`${event.description || 'Our event is starting in less than 15 minutes!'}\n\nGet ready and hop online!`)
+              .setColor('#ff0000')
+              .setTimestamp();
+
+            await channel.send({ 
+              content: rsvpMentions ? `**Attention RSVP'd Members:** ${rsvpMentions}` : '@everyone', 
+              embeds: [embed] 
+            });
+          }
+        }
+
+        // Mark reminder as sent
+        await client.prisma.event.update({
+          where: { id: event.id },
+          data: { reminder_sent: true }
+        });
+      }
+    } catch (error) {
+      logger.error(error, 'Error in Event Reminder Cron Job');
+    }
+  });
 }
 
 /**
