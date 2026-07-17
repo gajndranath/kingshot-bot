@@ -51,6 +51,12 @@ adminApp.use((req, res, next) => {
   req.prisma = prisma;
   next();
 });
+
+// Ping route for UptimeRobot
+adminApp.get('/', (req, res) => {
+  res.send('Kingshot Bot is ALIVE! 🚀');
+});
+
 adminApp.use('/admin', adminRouter);
 
 const PORT = process.env.PORT || 4000;
