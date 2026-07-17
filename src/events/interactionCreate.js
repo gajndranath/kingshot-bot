@@ -72,7 +72,8 @@ module.exports = {
           await interaction.channel.send({ content: '@everyone', embeds: [embed], components: [row] });
           return interaction.reply({ content: '✅ Event scheduled successfully via Control Panel.', flags: 64 });
         } catch (err) {
-          return interaction.reply({ content: '❌ Error scheduling event.', flags: 64 });
+          logger.error(err, 'Event schedule error');
+          return interaction.reply({ content: '❌ Error scheduling event: ' + err.message, flags: 64 });
         }
       }
 
