@@ -1,6 +1,7 @@
 const { ContextMenuCommandBuilder, ApplicationCommandType, EmbedBuilder } = require('discord.js');
 const logger = require('../../utils/logger');
 const translationCache = require('../../utils/translationCache');
+const { checkRateLimit } = require('../../middlewares/rateLimit');
 
 module.exports = {
   data: new ContextMenuCommandBuilder()
@@ -8,6 +9,8 @@ module.exports = {
     .setType(ApplicationCommandType.Message),
 
   async execute(interaction, client) {
+    if (!(await checkRateLimit(interaction))) return;
+
     // Acknowledge the interaction immediately as ephemeral
     await interaction.deferReply({ ephemeral: true });
 
@@ -32,9 +35,13 @@ module.exports = {
 
       // 2. Fetch from AI Brain
       const AI_BRAIN_URL = process.env.AI_BRAIN_URL || 'http://localhost:8000/api';
+      const AI_BRAIN_API_KEY = process.env.AI_BRAIN_API_KEY || 'default-dev-key';
       const response = await fetch(`${AI_BRAIN_URL}/translate`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-API-Key': AI_BRAIN_API_KEY 
+        },
         body: JSON.stringify({ text: textToTranslate, target_language: targetLocale })
       });
 

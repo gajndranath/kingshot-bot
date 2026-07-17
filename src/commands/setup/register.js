@@ -9,6 +9,10 @@ module.exports = {
       option.setName('in_game_name')
         .setDescription('Your exact Kingshot in-game name')
         .setRequired(true))
+    .addStringOption(option => 
+      option.setName('in_game_id')
+        .setDescription('Your permanent Kingshot account ID (e.g., 105829482)')
+        .setRequired(true))
     .addStringOption(option =>
       option.setName('role')
         .setDescription('Your in-game role')
@@ -25,12 +29,39 @@ module.exports = {
   
   async execute(interaction, client) {
     const inGameName = interaction.options.getString('in_game_name');
+    const inGameId = interaction.options.getString('in_game_id');
     const role = interaction.options.getString('role');
     const allianceTag = interaction.options.getString('alliance_tag');
 
     await interaction.deferReply({ ephemeral: true });
 
     try {
+      // Security Check: Is this ID Banned?
+      const isBanned = await client.prisma.bannedPlayer.findUnique({
+        where: { guild_id_in_game_id: { guild_id: interaction.guildId, in_game_id: inGameId } }
+      });
+
+      if (isBanned) {
+        // Alert R4/R5 silently in their audit/alert channel
+        const config = await client.prisma.guildConfig.findUnique({ where: { guild_id: interaction.guildId } });
+        if (config && config.alert_channel) {
+          const alertChannel = await interaction.guild.channels.fetch(config.alert_channel).catch(() => null);
+          if (alertChannel) {
+            const embed = new EmbedBuilder()
+              .setTitle('🚨 Banned Player Intrusion Attempt')
+              .setDescription(`User <@${interaction.user.id}> attempted to register using a banned Game ID!`)
+              .addFields(
+                { name: 'Attempted Name', value: inGameName, inline: true },
+                { name: 'Banned ID', value: inGameId, inline: true },
+                { name: 'Ban Reason', value: isBanned.reason || 'No reason provided', inline: false }
+              )
+              .setColor('#FF0000');
+            await alertChannel.send({ embeds: [embed] });
+          }
+        }
+        return interaction.editReply({ content: '⛔ **Access Denied:** Your In-Game ID is permanently banned from this alliance.' });
+      }
+
       // Upsert Member into DB as unverified
       const member = await client.prisma.member.upsert({
         where: {
@@ -41,6 +72,7 @@ module.exports = {
         },
         update: {
           in_game_name: inGameName,
+          in_game_id: inGameId,
           role: role,
           alliance_tag: allianceTag,
           is_verified: false
@@ -49,6 +81,7 @@ module.exports = {
           discord_id: interaction.user.id,
           guild_id: interaction.guildId,
           in_game_name: inGameName,
+          in_game_id: inGameId,
           role: role,
           alliance_tag: allianceTag,
           is_verified: false
@@ -93,24 +126,40 @@ module.exports = {
             .setStyle(ButtonStyle.Danger)
         );
 
-      // **SECURITY BYPASS: Server Owner Bootstrapping**
-      // If the registering user is the owner of the Discord Server, auto-verify them as R5
+      // **SECURITY BYPASS 1: Server Owner Bootstrapping**
       const isOwner = interaction.user.id === interaction.guild.ownerId;
-      
       if (isOwner) {
         await client.prisma.member.update({
           where: { discord_id_guild_id: { discord_id: interaction.user.id, guild_id: interaction.guildId } },
           data: { is_verified: true, role: 'R5' }
         });
         
-        // Notify the owner
-        await interaction.editReply(`👑 **Server Owner Recognized!** You have been automatically verified as **${inGameName} (R5)**. You can now use all commands and approve other members in the alert channel.`);
-        
-        // Optionally update the embed to show auto-approved
         embed.setTitle('🛡️ New Registration Request (AUTO-APPROVED)')
              .setDescription(`User <@${interaction.user.id}> is the Server Owner and was automatically verified as R5.`);
         await alertChannel.send({ embeds: [embed] });
-        return;
+        return interaction.editReply(`👑 **Server Owner Recognized!** You have been automatically verified as **${inGameName} (R5)**.`);
+      }
+
+      // **SECURITY BYPASS 2: Auto-Migration for Existing Servers**
+      // If the user already possesses an official alliance role in Discord, they were vetted by an R4 in the past.
+      const discordMember = await interaction.guild.members.fetch(interaction.user.id).catch(() => null);
+      if (discordMember) {
+        const hasOfficialRole = 
+          discordMember.roles.cache.has(process.env.ROLE_MEMBER_ID) ||
+          discordMember.roles.cache.has(process.env.ROLE_R4_ID) ||
+          discordMember.roles.cache.has(process.env.ROLE_R5_ID);
+
+        if (hasOfficialRole) {
+          await client.prisma.member.update({
+            where: { discord_id_guild_id: { discord_id: interaction.user.id, guild_id: interaction.guildId } },
+            data: { is_verified: true }
+          });
+          
+          embed.setTitle('🛡️ New Registration Request (AUTO-MIGRATED)')
+               .setDescription(`User <@${interaction.user.id}> already held an official Discord Role. Their In-Game ID has been securely logged and they are Auto-Verified.`);
+          await alertChannel.send({ embeds: [embed] });
+          return interaction.editReply(`✅ **Auto-Verification Successful!** Since you already have an Alliance role in this server, your In-Game ID has been securely linked without needing R4 approval.`);
+        }
       }
 
       await alertChannel.send({ embeds: [embed], components: [row] });

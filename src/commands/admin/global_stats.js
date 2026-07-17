@@ -1,15 +1,14 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 
-// REPLACE THIS WITH YOUR ACTUAL DISCORD ID TO SECURE THE COMMAND
-const DEVELOPER_DISCORD_ID = '123456789012345678'; 
-
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('global_stats')
     .setDescription('Hidden Admin Command: View SaaS Metrics (Dev Only)'),
   
   async execute(interaction, client) {
-    if (interaction.user.id !== DEVELOPER_DISCORD_ID) {
+    const DEVELOPER_DISCORD_ID = process.env.DEVELOPER_DISCORD_ID;
+
+    if (!DEVELOPER_DISCORD_ID || interaction.user.id !== DEVELOPER_DISCORD_ID) {
       return interaction.reply({ content: '⛔ Unknown command or insufficient permissions.', ephemeral: true });
     }
 

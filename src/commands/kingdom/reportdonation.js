@@ -1,5 +1,6 @@
 const { SlashCommandBuilder } = require('discord.js');
 const logger = require('../../utils/logger');
+const { checkRateLimit } = require('../../middlewares/rateLimit');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -12,6 +13,8 @@ module.exports = {
     ),
     
   async execute(interaction, client) {
+    if (!(await checkRateLimit(interaction))) return;
+
     const attachment = interaction.options.getAttachment('screenshot');
     const guildId = interaction.guildId;
     const discordId = interaction.user.id;
@@ -33,9 +36,14 @@ module.exports = {
 
       // Send image to Python Brain
       const AI_BRAIN_URL = process.env.AI_BRAIN_URL || 'http://localhost:8000/api';
+      const AI_BRAIN_API_KEY = process.env.AI_BRAIN_API_KEY || 'default-dev-key';
+      
       const response = await fetch(`${AI_BRAIN_URL}/scan-donation`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-API-Key': AI_BRAIN_API_KEY 
+        },
         body: JSON.stringify({ image_url: attachment.url })
       });
 

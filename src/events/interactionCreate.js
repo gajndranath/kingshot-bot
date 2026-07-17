@@ -90,6 +90,43 @@ module.exports = {
         return interaction.reply({ content: `✅ **[${tag}]** ${academyTag ? `(and Academy [${academyTag}])` : ''} added to NAP List via Control Panel.`, ephemeral: true });
       }
 
+      if (interaction.customId === 'modal_verify') {
+        const inGameName = interaction.fields.getTextInputValue('in_game_name');
+        const inGameId = interaction.fields.getTextInputValue('in_game_id');
+        let allianceTag = null;
+        try { allianceTag = interaction.fields.getTextInputValue('alliance_tag'); } catch(e){}
+
+        await interaction.deferReply({ ephemeral: true });
+
+        try {
+          const discordMember = await interaction.guild.members.fetch(interaction.user.id).catch(() => null);
+          const hasOfficialRole = discordMember && (
+            discordMember.roles.cache.has(process.env.ROLE_MEMBER_ID) ||
+            discordMember.roles.cache.has(process.env.ROLE_R4_ID) ||
+            discordMember.roles.cache.has(process.env.ROLE_R5_ID)
+          );
+
+          if (!hasOfficialRole) {
+            return interaction.editReply('⛔ You do not have the official Alliance Discord role yet. Please use `/register` to request manual approval from an R4.');
+          }
+
+          let assumedRole = 'MEMBER';
+          if (discordMember.roles.cache.has(process.env.ROLE_R5_ID)) assumedRole = 'R5';
+          else if (discordMember.roles.cache.has(process.env.ROLE_R4_ID)) assumedRole = 'R4';
+
+          await client.prisma.member.upsert({
+            where: { discord_id_guild_id: { discord_id: interaction.user.id, guild_id: interaction.guildId } },
+            update: { in_game_name: inGameName, in_game_id: inGameId, alliance_tag: allianceTag, role: assumedRole, is_verified: true },
+            create: { discord_id: interaction.user.id, guild_id: interaction.guildId, in_game_name: inGameName, in_game_id: inGameId, alliance_tag: allianceTag, role: assumedRole, is_verified: true }
+          });
+
+          return interaction.editReply(`✅ **Identity Linked!** You have been auto-verified as **${inGameName}** based on your existing Discord roles.`);
+        } catch (err) {
+          logger.error(err, 'Error in modal_verify');
+          return interaction.editReply('❌ Failed to verify identity.');
+        }
+      }
+
       return;
     }
 
@@ -130,6 +167,19 @@ async function handleButtonInteraction(interaction, client) {
       new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('event_name').setLabel('Event Name').setStyle(TextInputStyle.Short).setRequired(true)),
       new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('event_date').setLabel('Date (YYYY-MM-DD)').setStyle(TextInputStyle.Short).setRequired(true)),
       new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('event_time').setLabel('UTC Time (HH:MM)').setStyle(TextInputStyle.Short).setRequired(true))
+    );
+    return interaction.showModal(modal);
+  }
+
+  if (customId === 'ui_verify_me') {
+    const modal = new ModalBuilder()
+      .setCustomId('modal_verify')
+      .setTitle('Link Kingshot Identity');
+
+    modal.addComponents(
+      new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('in_game_name').setLabel('Exact In-Game Name').setStyle(TextInputStyle.Short).setRequired(true)),
+      new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('in_game_id').setLabel('Permanent Game ID (Number)').setStyle(TextInputStyle.Short).setRequired(true)),
+      new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('alliance_tag').setLabel('Alliance Tag (Optional)').setStyle(TextInputStyle.Short).setRequired(false))
     );
     return interaction.showModal(modal);
   }

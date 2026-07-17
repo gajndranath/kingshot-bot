@@ -32,6 +32,7 @@ model GuildConfig {
   events             Event[]
   votes              Vote[]
   nap_alliances      NAPAlliance[]
+  banned_players     BannedPlayer[]
 }
 
 model NAPAlliance {
@@ -75,6 +76,7 @@ model Member {
   guild_id        String
   guild           GuildConfig @relation(fields: [guild_id], references: [guild_id], onDelete: Cascade)
   in_game_name    String
+  in_game_id      String?     // NEW: Permanent identifier for bans
   alliance_tag    String?     // E.g., [K99] - Used mostly in Kingdom Mode
   alliance_type   String      @default("MAIN") // NEW: MAIN or ACADEMY
   role            String      @default("MEMBER") // "R4", "R5", "MEMBER"
@@ -123,4 +125,16 @@ model Vote {
   topic           String
   restricted_to   String      // e.g., "R4"
   closes_at       DateTime
+}
+
+model BannedPlayer {
+  id              String      @id @default(uuid())
+  guild_id        String
+  guild           GuildConfig @relation(fields: [guild_id], references: [guild_id], onDelete: Cascade)
+  in_game_id      String
+  banned_by       String      // Discord ID of R4/R5
+  reason          String?
+  created_at      DateTime    @default(now())
+
+  @@unique([guild_id, in_game_id])
 }
