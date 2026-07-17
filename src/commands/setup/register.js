@@ -93,9 +93,29 @@ module.exports = {
             .setStyle(ButtonStyle.Danger)
         );
 
+      // **SECURITY BYPASS: Server Owner Bootstrapping**
+      // If the registering user is the owner of the Discord Server, auto-verify them as R5
+      const isOwner = interaction.user.id === interaction.guild.ownerId;
+      
+      if (isOwner) {
+        await client.prisma.member.update({
+          where: { discord_id_guild_id: { discord_id: interaction.user.id, guild_id: interaction.guildId } },
+          data: { is_verified: true, role: 'R5' }
+        });
+        
+        // Notify the owner
+        await interaction.editReply(`👑 **Server Owner Recognized!** You have been automatically verified as **${inGameName} (R5)**. You can now use all commands and approve other members in the alert channel.`);
+        
+        // Optionally update the embed to show auto-approved
+        embed.setTitle('🛡️ New Registration Request (AUTO-APPROVED)')
+             .setDescription(`User <@${interaction.user.id}> is the Server Owner and was automatically verified as R5.`);
+        await alertChannel.send({ embeds: [embed] });
+        return;
+      }
+
       await alertChannel.send({ embeds: [embed], components: [row] });
       
-      await interaction.editReply(`✅ Registration submitted for **${inGameName}** (${role}). Please wait for R4/R5 approval.`);
+      await interaction.editReply(`✅ Registration submitted for **${inGameName}** (${role}). Please wait for R4/R5 approval in the alert channel.`);
 
     } catch (error) {
       throw error;
