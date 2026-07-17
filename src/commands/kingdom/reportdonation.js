@@ -1,19 +1,25 @@
-const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, AttachmentBuilder } = require('discord.js');
 const logger = require('../../utils/logger');
+const fs = require('fs');
+const path = require('path');
 const { checkRateLimit } = require('../../middlewares/rateLimit');
+const { checkSubscription } = require('../../middlewares/checkSubscription');
+const { checkMode } = require('../../middlewares/checkMode');
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('report-donation')
-    .setDescription('Upload a screenshot of your Alliance Tech Donation leaderboard.')
+    .setDescription('Upload a screenshot of alliance tech donations to scan for slackers.')
     .addAttachmentOption(option => 
       option.setName('screenshot')
-      .setDescription('The tech donation screenshot')
-      .setRequired(true)
+        .setDescription('The screenshot of the alliance tech donation leaderboard')
+        .setRequired(true)
     ),
     
   async execute(interaction, client) {
     if (!(await checkRateLimit(interaction))) return;
+    if (!(await checkSubscription(interaction))) return;
+    if (!(await checkMode(interaction, 'KINGDOM'))) return;
 
     const attachment = interaction.options.getAttachment('screenshot');
     const guildId = interaction.guildId;

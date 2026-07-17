@@ -1,10 +1,11 @@
-const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, PermissionFlagsBits } = require('discord.js');
 const logger = require('../../utils/logger');
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('control-panel')
-    .setDescription('Spawn the R4/R5 Master UI Control Panel in this channel.'),
+    .setDescription('Spawn the R4/R5 Master UI Control Panel in this channel.')
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageRoles),
     
   async execute(interaction, client) {
     const guildId = interaction.guildId;

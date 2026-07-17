@@ -20,7 +20,9 @@
     "helmet": "^8.3.0",
     "jsonwebtoken": "^9.0.3",
     "node-cron": "^3.0.3",
+    "node-fetch": "^3.3.2",
     "stripe": "^14.19.0",
+    "tesseract.js": "^7.0.0",
     "uuid": "^11.1.1"
   },
   "devDependencies": {

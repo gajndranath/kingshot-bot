@@ -5,20 +5,20 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('publish-verify')
     .setDescription('Publishes a permanent Self-Verification panel with a button.')
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageRoles),
 
   async execute(interaction, client) {
     const embed = new EmbedBuilder()
       .setColor('#0099ff')
       .setTitle('🛡️ Kingshot OS - Identity Verification')
-      .setDescription('To use this Discord Server fully and access AI features, you must link your Kingshot Game ID.\n\n**Existing Members:** Click the button below, enter your Game ID, and you will be auto-verified!\n**New Members:** Your request will be sent to an R4 for approval.')
+      .setDescription('To use this Discord Server fully and access AI features, you must link your in-game identity.\n\n**Existing Members:** Click the button below, enter your In-Game Name, and you will be auto-verified!\n**New Members:** Your request will be sent to an R4 for approval.')
       .setFooter({ text: 'Kingshot Alliance System' });
 
     const row = new ActionRowBuilder()
       .addComponents(
         new ButtonBuilder()
           .setCustomId('ui_verify_me')
-          .setLabel('Link Game ID (Verify)')
+          .setLabel('Link Identity (Verify)')
           .setStyle(ButtonStyle.Primary)
           .setEmoji('🔗')
       );

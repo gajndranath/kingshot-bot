@@ -77,6 +77,11 @@ module.exports = {
       }
 
       if (interaction.customId === 'modal_nap') {
+        const config = await client.prisma.guildConfig.findUnique({ where: { guild_id: interaction.guildId } });
+        if (!config || config.mode !== 'KINGDOM') {
+          return interaction.reply({ content: '❌ NAP Management is only available in Kingdom Mode.', ephemeral: true });
+        }
+
         const tag = interaction.fields.getTextInputValue('main_tag').toUpperCase();
         let academyTag = null;
         try { academyTag = interaction.fields.getTextInputValue('academy_tag').toUpperCase(); } catch(e){}
@@ -92,21 +97,12 @@ module.exports = {
 
       if (interaction.customId === 'modal_verify') {
         const inGameName = interaction.fields.getTextInputValue('in_game_name');
-        const inGameId = interaction.fields.getTextInputValue('in_game_id');
         let allianceTag = null;
         try { allianceTag = interaction.fields.getTextInputValue('alliance_tag'); } catch(e){}
 
         await interaction.deferReply({ ephemeral: true });
 
         try {
-          // SECURITY CHECK: Is this Game ID permanently banned?
-          const isBanned = await client.prisma.bannedPlayer.findUnique({
-            where: { guild_id_in_game_id: { guild_id: interaction.guildId, in_game_id: inGameId } }
-          });
-
-          if (isBanned) {
-            return interaction.editReply('⛔ **Access Denied:** Your In-Game ID is permanently banned from this alliance.');
-          }
 
           const discordMember = await interaction.guild.members.fetch(interaction.user.id).catch(() => null);
           const hasOfficialRole = discordMember && (
@@ -125,9 +121,20 @@ module.exports = {
 
           await client.prisma.member.upsert({
             where: { discord_id_guild_id: { discord_id: interaction.user.id, guild_id: interaction.guildId } },
-            update: { in_game_name: inGameName, in_game_id: inGameId, alliance_tag: allianceTag, role: assumedRole, is_verified: true },
-            create: { discord_id: interaction.user.id, guild_id: interaction.guildId, in_game_name: inGameName, in_game_id: inGameId, alliance_tag: allianceTag, role: assumedRole, is_verified: true }
+            update: { in_game_name: inGameName, alliance_tag: allianceTag, role: assumedRole, is_verified: true },
+            create: { discord_id: interaction.user.id, guild_id: interaction.guildId, in_game_name: inGameName, alliance_tag: allianceTag, role: assumedRole, is_verified: true }
           });
+
+          if (discordMember) {
+            try {
+              const nickname = allianceTag 
+                ? `[${allianceTag}] ${inGameName} - ${assumedRole}`
+                : `${inGameName} - ${assumedRole}`;
+              await discordMember.setNickname(nickname.substring(0, 32));
+            } catch (err) {
+              logger.error(err, 'Failed to rename member in auto-verify');
+            }
+          }
 
           return interaction.editReply(`✅ **Identity Linked!** You have been auto-verified as **${inGameName}** based on your existing Discord roles.`);
         } catch (err) {
@@ -187,7 +194,6 @@ async function handleButtonInteraction(interaction, client) {
 
     modal.addComponents(
       new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('in_game_name').setLabel('Exact In-Game Name').setStyle(TextInputStyle.Short).setRequired(true)),
-      new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('in_game_id').setLabel('Permanent Game ID (Number)').setStyle(TextInputStyle.Short).setRequired(true)),
       new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('alliance_tag').setLabel('Alliance Tag (Optional)').setStyle(TextInputStyle.Short).setRequired(false))
     );
     return interaction.showModal(modal);

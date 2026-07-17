@@ -2,6 +2,7 @@ const { ContextMenuCommandBuilder, ApplicationCommandType, EmbedBuilder } = requ
 const logger = require('../../utils/logger');
 const translationCache = require('../../utils/translationCache');
 const { checkRateLimit } = require('../../middlewares/rateLimit');
+const { checkSubscription } = require('../../middlewares/checkSubscription');
 const translate = require('google-translate-api-x');
 
 module.exports = {
@@ -11,6 +12,7 @@ module.exports = {
 
   async execute(interaction, client) {
     if (!(await checkRateLimit(interaction))) return;
+    if (!(await checkSubscription(interaction))) return;
 
     // Acknowledge the interaction immediately as ephemeral
     await interaction.deferReply({ ephemeral: true });

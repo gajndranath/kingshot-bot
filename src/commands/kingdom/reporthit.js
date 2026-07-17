@@ -1,19 +1,25 @@
-const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder } = require('discord.js');
 const logger = require('../../utils/logger');
+const fs = require('fs');
+const path = require('path');
 const { checkRateLimit } = require('../../middlewares/rateLimit');
+const { checkSubscription } = require('../../middlewares/checkSubscription');
+const { checkMode } = require('../../middlewares/checkMode');
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('report-hit')
-    .setDescription('Scan a battle screenshot for NAP violations.')
+    .setDescription('Upload a screenshot of a hit on a city or tile to check for NAP violations.')
     .addAttachmentOption(option => 
       option.setName('screenshot')
-      .setDescription('The battle report screenshot')
-      .setRequired(true)
+        .setDescription('The screenshot showing the attacker and defender details')
+        .setRequired(true)
     ),
-    
+
   async execute(interaction, client) {
     if (!(await checkRateLimit(interaction))) return;
+    if (!(await checkSubscription(interaction))) return;
+    if (!(await checkMode(interaction, 'KINGDOM'))) return;
     
     const attachment = interaction.options.getAttachment('screenshot');
     const guildId = interaction.guildId;

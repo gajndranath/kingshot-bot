@@ -93,6 +93,28 @@ router.get('/server/:guild_id', verifyToken, async (req, res) => {
   res.json(server);
 });
 
+// 3.6 Get Feedbacks
+router.get('/feedbacks', verifyToken, async (req, res) => {
+  const feedbacks = await req.prisma.feedback.findMany({
+    orderBy: { created_at: 'desc' },
+    include: { guild: { select: { alliance_tag: true, kingdom_number: true } } }
+  });
+  res.json(feedbacks);
+});
+
+// 3.7 Resolve Feedback
+router.put('/feedbacks/:id/resolve', verifyToken, async (req, res) => {
+  try {
+    const feedback = await req.prisma.feedback.update({
+      where: { id: req.params.id },
+      data: { is_resolved: true }
+    });
+    res.json(feedback);
+  } catch(e) {
+    res.status(500).json({ error: 'Failed to resolve' });
+  }
+});
+
 // 4. Update Subscription (Anti-Fraud & Manual Override)
 router.put('/subscription/:guild_id', verifyToken, async (req, res) => {
   const { guild_id } = req.params;

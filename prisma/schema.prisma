@@ -33,6 +33,7 @@ model GuildConfig {
   votes              Vote[]
   nap_alliances      NAPAlliance[]
   banned_players     BannedPlayer[]
+  feedbacks          Feedback[]
 }
 
 model NAPAlliance {
@@ -137,4 +138,15 @@ model BannedPlayer {
   created_at      DateTime    @default(now())
 
   @@unique([guild_id, in_game_id])
+}
+
+model Feedback {
+  id          String      @id @default(uuid())
+  guild_id    String
+  user_id     String
+  issue_text  String      @db.Text
+  is_resolved Boolean     @default(false)
+  created_at  DateTime    @default(now())
+  
+  guild       GuildConfig @relation(fields: [guild_id], references: [guild_id], onDelete: Cascade)
 }
