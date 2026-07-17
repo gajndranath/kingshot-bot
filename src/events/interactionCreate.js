@@ -91,7 +91,7 @@ module.exports = {
         }
 
         const editRow = new ActionRowBuilder().addComponents(
-          new ButtonBuilder().setCustomId('ui_edit_ai').setLabel('✏️ Edit Message').setStyle(ButtonStyle.Secondary)
+          new ButtonBuilder().setCustomId('edit_ai_message').setLabel('✏️ Edit Message').setStyle(ButtonStyle.Secondary)
         );
 
         await targetChannel.send({ embeds: [embed], components: [editRow] });
