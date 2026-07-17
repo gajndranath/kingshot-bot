@@ -16,11 +16,15 @@ module.exports = {
 
     try {
       const targetMessage = interaction.targetMessage;
-      const textToTranslate = targetMessage.content;
+      let textToTranslate = targetMessage.content;
       const targetLocale = interaction.locale; // The native language of the user's Discord app
-
+      
       if (!textToTranslate || textToTranslate.trim() === '') {
-        return interaction.editReply({ content: '❌ There is no text to translate in this message.' });
+        return interaction.editReply('❌ There is no text in this message to translate.');
+      }
+
+      if (textToTranslate.length > 1000) {
+        return interaction.editReply('❌ **Message too long!** The translator only supports up to 1000 characters per message.');
       }
 
       // 1. Check Memory Cache

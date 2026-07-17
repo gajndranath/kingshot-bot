@@ -99,6 +99,15 @@ module.exports = {
         await interaction.deferReply({ ephemeral: true });
 
         try {
+          // SECURITY CHECK: Is this Game ID permanently banned?
+          const isBanned = await client.prisma.bannedPlayer.findUnique({
+            where: { guild_id_in_game_id: { guild_id: interaction.guildId, in_game_id: inGameId } }
+          });
+
+          if (isBanned) {
+            return interaction.editReply('⛔ **Access Denied:** Your In-Game ID is permanently banned from this alliance.');
+          }
+
           const discordMember = await interaction.guild.members.fetch(interaction.user.id).catch(() => null);
           const hasOfficialRole = discordMember && (
             discordMember.roles.cache.has(process.env.ROLE_MEMBER_ID) ||

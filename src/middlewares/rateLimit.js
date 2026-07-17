@@ -8,14 +8,16 @@ const limits = new Map();
 
 async function checkRateLimit(interaction) {
   const guildId = interaction.guildId;
+  const userId = interaction.user.id;
+  const key = `${userId}_${guildId}`;
   const now = Date.now();
   
-  if (!limits.has(guildId)) {
-    limits.set(guildId, { count: 1, resetAt: now + 60000 });
+  if (!limits.has(key)) {
+    limits.set(key, { count: 1, resetAt: now + 60000 });
     return true;
   }
 
-  const record = limits.get(guildId);
+  const record = limits.get(key);
   
   if (now > record.resetAt) {
     // Reset window
@@ -25,8 +27,8 @@ async function checkRateLimit(interaction) {
   }
 
   if (record.count >= 10) {
-    logger.warn(`Rate limit exceeded for guild: ${guildId}`);
-    await interaction.reply({ content: '⛔ Rate Limit Exceeded: Your alliance can only submit 10 screenshots per minute. Please wait.', ephemeral: true });
+    logger.warn(`Rate limit exceeded for user ${userId} in guild ${guildId}`);
+    await interaction.reply({ content: '⛔ Rate Limit Exceeded: You can only use AI commands 10 times per minute. Please wait.', ephemeral: true });
     return false;
   }
 
