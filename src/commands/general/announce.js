@@ -25,7 +25,7 @@ module.exports = {
       const channelMenu = new ActionRowBuilder().addComponents(
         new ChannelSelectMenuBuilder()
           .setCustomId('ui_announce_channel')
-          .setPlaceholder('1️⃣ Select Target Channel')
+          .setPlaceholder('1️⃣ Target Channel (Optional - Uses Default)')
           .setChannelTypes(ChannelType.GuildText)
       );
 

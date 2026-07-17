@@ -1,22 +1,14 @@
-const { SlashCommandBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, PermissionFlagsBits } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ChannelSelectMenuBuilder, ButtonBuilder, ButtonStyle, ChannelType, PermissionFlagsBits } = require('discord.js');
 const logger = require('../../utils/logger');
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('schedule')
-    .setDescription('Schedule an alliance event via Pop-up Form (R4/R5 only)')
-    .addChannelOption(option => 
-      option.setName('target_channel')
-        .setDescription('Optional: Select a specific channel to post this event')
-        .addChannelTypes(0)
-        .setRequired(false)
-    )
+    .setDescription('Schedule an alliance event via Interactive Dashboard (R4/R5 only)')
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageEvents),
     
   async execute(interaction, client) {
     try {
-      const targetChannel = interaction.options.getChannel('target_channel');
-      
       const admin = await client.prisma.member.findUnique({
         where: { discord_id_guild_id: { discord_id: interaction.user.id, guild_id: interaction.guildId } }
       });
@@ -25,23 +17,30 @@ module.exports = {
         return interaction.reply({ content: '⛔ Only verified R4 or R5 officials can use this command.', flags: 64 });
       }
 
-      const modalId = targetChannel ? `modal_schedule_${targetChannel.id}` : 'modal_schedule_DEFAULT';
+      const embed = new EmbedBuilder()
+        .setTitle('📅 Event Scheduler')
+        .setDescription('Welcome to the Event Scheduler.\n\n1️⃣ Select a **Target Channel** (Optional - Uses Default).\n2️⃣ Click **Proceed** to enter event details.')
+        .setColor('#e67e22');
 
-      const modal = new ModalBuilder()
-        .setCustomId(modalId)
-        .setTitle('📅 Schedule Event');
-
-      modal.addComponents(
-        new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('event_name').setLabel('Event Name').setStyle(TextInputStyle.Short).setRequired(true)),
-        new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('event_date').setLabel('Date (YYYY-MM-DD)').setStyle(TextInputStyle.Short).setRequired(true)),
-        new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('event_time').setLabel('UTC Time (HH:MM)').setStyle(TextInputStyle.Short).setRequired(true))
+      const channelMenu = new ActionRowBuilder().addComponents(
+        new ChannelSelectMenuBuilder()
+          .setCustomId('ui_schedule_channel')
+          .setPlaceholder('1️⃣ Target Channel (Optional - Uses Default)')
+          .setChannelTypes(ChannelType.GuildText)
       );
-      
-      await interaction.showModal(modal);
+
+      const buttonRow = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+          .setCustomId('open_schedule_modal')
+          .setLabel('2️⃣ Proceed to Scheduler')
+          .setStyle(ButtonStyle.Success)
+      );
+
+      await interaction.reply({ embeds: [embed], components: [channelMenu, buttonRow], flags: 64 });
 
     } catch (error) {
-      logger.error(error, 'Schedule Command Error');
-      await interaction.reply({ content: '❌ Could not open the schedule form.', flags: 64 });
+      logger.error(error, 'Failed to show schedule dashboard');
+      await interaction.reply({ content: '❌ Could not open the schedule dashboard.', flags: 64 });
     }
-  },
+  }
 };

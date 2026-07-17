@@ -14,7 +14,7 @@ module.exports = {
    */
   async execute(interaction, client) {
     if (interaction.isChannelSelectMenu()) {
-      if (interaction.customId === 'ui_announce_channel') {
+      if (interaction.customId === 'ui_announce_channel' || interaction.customId === 'ui_schedule_channel' || interaction.customId === 'ui_guide_channel') {
         const msgId = interaction.message.id;
         const channelId = interaction.values[0];
         
@@ -27,7 +27,7 @@ module.exports = {
     }
 
     if (interaction.isStringSelectMenu()) {
-      if (interaction.customId === 'ui_announce_template') {
+      if (interaction.customId === 'ui_announce_template' || interaction.customId === 'ui_guide_template') {
         const msgId = interaction.message.id;
         const template = interaction.values[0];
         
@@ -41,6 +41,80 @@ module.exports = {
 
     if (interaction.isButton()) {
       const customId = interaction.customId;
+
+      if (customId === 'post_guide_btn') {
+        const msgId = interaction.message.id;
+        const state = uiStateCache.get(msgId) || { channelId: 'DEFAULT', template: 'none' };
+        
+        if (state.template === 'none') {
+          return interaction.reply({ content: '❌ Please select a Strategy Guide first.', flags: 64 });
+        }
+
+        let finalChannelId = interaction.channelId;
+        if (state.channelId === 'DEFAULT') {
+          const config = await client.prisma.guildConfig.findUnique({ where: { guild_id: interaction.guildId } });
+          if (config && config.alert_channel) finalChannelId = config.alert_channel;
+        } else {
+          finalChannelId = state.channelId;
+          // Self-Learning: Update default channel
+          await client.prisma.guildConfig.upsert({
+            where: { guild_id: interaction.guildId },
+            update: { alert_channel: finalChannelId },
+            create: { guild_id: interaction.guildId, alert_channel: finalChannelId }
+          });
+        }
+
+        const targetChannel = await interaction.guild.channels.fetch(finalChannelId).catch(() => null);
+        if (!targetChannel) {
+          return interaction.reply({ content: '❌ Could not find the target channel.', flags: 64 });
+        }
+
+        const botPermissions = targetChannel.permissionsFor(client.user);
+        if (!botPermissions || !botPermissions.has(PermissionFlagsBits.SendMessages) || !botPermissions.has(PermissionFlagsBits.EmbedLinks)) {
+          return interaction.reply({ content: `❌ I do not have permission to post in <#${targetChannel.id}>.`, flags: 64 });
+        }
+
+        const embed = new EmbedBuilder().setColor('#3498db').setTimestamp();
+        
+        if (state.template === 'guide_bear_hunt') {
+          embed.setTitle('🐻 Bear Hunt Strategy Guide')
+               .setDescription('**Objective:** Deal maximum damage to the Bear in 30 minutes.\n\n**Troop Requirements:**\n- **Send ONLY Infantry or Lancers.**\n- **NO SIEGE ENGINES.** Siege slows down the rally.\n- Ensure you are sending your highest tier troops.\n\n**Rally Rules:**\n- Only R4/R5 and top power players should start rallies.\n- Join the rallies of the strongest players first.\n- Use a damage boost buff before the event starts.\n\n**Pro Tip:** If you cannot fill a rally, spread your troops evenly across multiple strong rallies to maximize the alliance score.');
+        } else if (state.template === 'guide_castle_siege') {
+          embed.setTitle('🏰 Castle Siege Strategy Guide')
+               .setDescription('**Objective:** Capture and hold the central Castle and 4 Turrets.\n\n**Troop Requirements:**\n- Follow the rally leader\'s instructions carefully.\n- Generally, standard balanced formations (Infantry, Lancer, Marksman) are required.\n- Send your best Heroes that match the troop type you are sending.\n\n**Rules:**\n- **Do NOT attack solo.** Always join a rally.\n- If you are zeroed or low on troops, focus on reinforcing held turrets instead of attacking.\n- Keep your shields up until you are ready to attack.\n\n**Pro Tip:** Speed up your rallies if you are contesting an objective that is about to fall.');
+        } else if (state.template === 'guide_kvk') {
+          embed.setTitle('⚔️ State vs State (KvK) Strategy Guide')
+               .setDescription('**Objective:** Defend our State and conquer the enemy State.\n\n**Preparation:**\n- Gather resources and heal all troops before the event begins.\n- Bubble (Shield) immediately if you are not actively participating in attacks.\n- Port to the enemy state only in coordinated groups.\n\n**Combat:**\n- **NEVER attack farms or weak alliances** unless authorized by the Supreme Commander.\n- Focus on capturing the enemy\'s Sunfire Castle and Turrets.\n- Reinforce our own Castle if it is under attack.\n\n**Pro Tip:** Use anti-scout items to hide your troop counts from enemy whales.');
+        } else if (state.template === 'guide_facility') {
+          embed.setTitle('🛡️ Facility/Fortress Strategy Guide')
+               .setDescription('**Objective:** Capture Alliance Facilities for passive buffs.\n\n**Deployment:**\n- Be online 10 minutes before the Facility shield drops.\n- R4/R5 will assign specific members to lead the rallies.\n- Fill the rallies as fast as possible. Use speedups!\n\n**Defending:**\n- Once captured, immediately reinforce the Facility with your strongest troops.\n- The first 30 minutes are crucial. Do not recall your troops until the Facility is fully secured.\n\n**Pro Tip:** Assign one member to purely watch for incoming enemy rallies and alert the alliance in chat.');
+        }
+
+        const editRow = new ActionRowBuilder().addComponents(
+          new ButtonBuilder().setCustomId('ui_edit_ai').setLabel('✏️ Edit Message').setStyle(ButtonStyle.Secondary)
+        );
+
+        await targetChannel.send({ embeds: [embed], components: [editRow] });
+        
+        return interaction.reply({ content: `✅ Guide posted successfully to <#${targetChannel.id}>.`, flags: 64 });
+      }
+
+      if (customId === 'open_schedule_modal') {
+        const msgId = interaction.message.id;
+        const state = uiStateCache.get(msgId) || { channelId: 'DEFAULT' };
+        
+        const modalId = `modal_schedule_${state.channelId}`;
+        const modal = new ModalBuilder()
+          .setCustomId(modalId)
+          .setTitle('📅 Schedule Event');
+
+        modal.addComponents(
+          new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('event_name').setLabel('Event Name').setStyle(TextInputStyle.Short).setRequired(true)),
+          new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('event_date').setLabel('Date (YYYY-MM-DD)').setStyle(TextInputStyle.Short).setPlaceholder('2024-05-20').setRequired(true)),
+          new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('event_time').setLabel('Time (HH:MM in UTC)').setStyle(TextInputStyle.Short).setPlaceholder('14:30').setRequired(true))
+        );
+        return interaction.showModal(modal);
+      }
 
       if (customId === 'open_announce_modal') {
         const msgId = interaction.message.id;
@@ -107,10 +181,18 @@ module.exports = {
         const newText = interaction.fields.getTextInputValue('ai_text_input');
         const message = interaction.message;
         
-        await message.edit({ 
-          content: `${newText}\n\n*(Edited manually by R4/R5: ${interaction.user.tag})*`,
-          components: message.components // Preserve the original ActionRow buttons
-        });
+        let editPayload = { components: message.components };
+        
+        if (message.embeds && message.embeds.length > 0) {
+          const originalEmbed = message.embeds[0];
+          const updatedEmbed = EmbedBuilder.from(originalEmbed)
+            .setDescription(`${newText}\n\n*(Edited manually by R4/R5: ${interaction.user.tag})*`);
+          editPayload.embeds = [updatedEmbed];
+        } else {
+          editPayload.content = `${newText}\n\n*(Edited manually by R4/R5: ${interaction.user.tag})*`;
+        }
+
+        await message.edit(editPayload);
 
         // Audit Log
         const config = await client.prisma.guildConfig.findUnique({ where: { guild_id: interaction.guildId } });
@@ -156,6 +238,12 @@ module.exports = {
           if (config && config.alert_channel) finalChannelId = config.alert_channel;
         } else {
           finalChannelId = targetId;
+          // Self-Learning: Update default channel
+          await client.prisma.guildConfig.upsert({
+            where: { guild_id: interaction.guildId },
+            update: { alert_channel: finalChannelId },
+            create: { guild_id: interaction.guildId, alert_channel: finalChannelId }
+          });
         }
 
         const targetChannel = await interaction.guild.channels.fetch(finalChannelId).catch(() => null);
@@ -218,6 +306,12 @@ module.exports = {
             if (config && config.alert_channel) finalChannelId = config.alert_channel;
           } else {
             finalChannelId = targetId;
+            // Self-Learning: Update default channel
+            await client.prisma.guildConfig.upsert({
+              where: { guild_id: interaction.guildId },
+              update: { alert_channel: finalChannelId },
+              create: { guild_id: interaction.guildId, alert_channel: finalChannelId }
+            });
           }
 
           const targetChannel = await interaction.guild.channels.fetch(finalChannelId).catch(() => null);
@@ -467,16 +561,26 @@ async function handleButtonInteraction(interaction, client) {
   const { customId } = interaction;
   
   if (customId === 'ui_schedule_event') {
-    const modal = new ModalBuilder()
-      .setCustomId('modal_schedule_DEFAULT')
-      .setTitle('Schedule an Event');
+    const embed = new EmbedBuilder()
+      .setTitle('📅 Event Scheduler')
+      .setDescription('Welcome to the Event Scheduler.\n\n1️⃣ Select a **Target Channel** (Optional - Uses Default).\n2️⃣ Click **Proceed** to enter event details.')
+      .setColor('#e67e22');
 
-    modal.addComponents(
-      new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('event_name').setLabel('Event Name').setStyle(TextInputStyle.Short).setRequired(true)),
-      new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('event_date').setLabel('Date (YYYY-MM-DD)').setStyle(TextInputStyle.Short).setPlaceholder('2024-05-20').setRequired(true)),
-      new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('event_time').setLabel('Time (HH:MM in UTC)').setStyle(TextInputStyle.Short).setPlaceholder('14:30').setRequired(true))
+    const channelMenu = new ActionRowBuilder().addComponents(
+      new ChannelSelectMenuBuilder()
+        .setCustomId('ui_schedule_channel')
+        .setPlaceholder('1️⃣ Target Channel (Optional - Uses Default)')
+        .setChannelTypes(ChannelType.GuildText)
     );
-    return interaction.showModal(modal);
+
+    const buttonRow = new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId('open_schedule_modal')
+        .setLabel('2️⃣ Proceed to Scheduler')
+        .setStyle(ButtonStyle.Success)
+    );
+
+    return interaction.reply({ embeds: [embed], components: [channelMenu, buttonRow], flags: 64 });
   }
 
   if (customId === 'ui_verify_me') {
@@ -637,7 +741,12 @@ async function handleButtonInteraction(interaction, client) {
       return interaction.reply({ content: '⛔ Only verified R4/R5 can edit AI messages.', flags: 64 });
     }
 
-    const currentContent = interaction.message.content || 'Error reading message content.';
+    let currentContent = interaction.message.content;
+    if (interaction.message.embeds && interaction.message.embeds.length > 0) {
+      currentContent = interaction.message.embeds[0].description || currentContent;
+    }
+    if (!currentContent) currentContent = 'Error reading message content.';
+    
     // Truncate to 4000 characters which is the Modal TextInput maximum limit
     const truncatedContent = currentContent.substring(0, 4000);
 
