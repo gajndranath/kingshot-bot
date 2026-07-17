@@ -27,9 +27,9 @@ eventHandler(client);
 const { initCronEngine } = require('./services/cronEngine');
 initCronEngine(client);
 
-// Initialize Payment Webhook Server
-const { initPaymentWebhookServer } = require('./services/paymentWebhook');
-initPaymentWebhookServer(prisma);
+// Initialize Payment Webhook Server (Disabled for now to prevent Port Conflict, handled via SuperAdmin)
+// const { initPaymentWebhookServer } = require('./services/paymentWebhook');
+// initPaymentWebhookServer(prisma);
 
 // Initialize Super Admin API
 const express = require('express');

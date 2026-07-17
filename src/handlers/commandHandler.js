@@ -20,6 +20,7 @@ module.exports = async (client) => {
 
   for (const folder of commandFolders) {
     const folderPath = path.join(commandsPath, folder);
+    if (folder === 'diplomacy') continue;
     if (!fs.lstatSync(folderPath).isDirectory()) continue;
 
     const commandFiles = fs.readdirSync(folderPath).filter(file => file.endsWith('.js'));
